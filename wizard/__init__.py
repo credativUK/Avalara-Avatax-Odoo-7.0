@@ -2,7 +2,6 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 NovaPoint Group LLC (<http://www.novapointgroup.com>)
 #    Copyright (C) 2004-2010 OpenERP SA (<http://www.openerp.com>)
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -20,7 +19,7 @@
 #
 ##############################################################################
 
-import account_salestax_avatax_ping
-import account_salestax_avatax_address_validate
+import avalara_salestax_ping
+import avalara_salestax_address_validate
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

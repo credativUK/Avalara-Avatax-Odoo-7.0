@@ -2,7 +2,6 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 NovaPoint Group LLC (<http://www.novapointgroup.com>)
 #    Copyright (C) 2004-2010 OpenERP SA (<http://www.openerp.com>)
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -20,9 +19,14 @@
 #
 ##############################################################################
 from osv import osv, fields
+from pkg_resources import require
 
 class product_tax_code(osv.osv):
-    """Define type of tax code"""
+    """ Define type of tax code: 
+    @param type: product is use as product code,
+    @param type: freight is use for shipping code
+    @param type: service is use for service type product  
+    """
     _name = 'product.tax.code'
     _description = 'Tax Code'
     _columns = {
@@ -41,10 +45,21 @@ product_tax_code()
 class product_template(osv.osv):
     _inherit = "product.template"
     _columns = {
-        'tax_code_id': fields.many2one('product.tax.code', 'Tax Code', help="AvaTax Tax Code")
+        'tax_code_id': fields.many2one('product.tax.code', 'Tax Code', help="AvaTax Tax Code"),
+        'tax_apply': fields.boolean('Tax Calculation',help="Use Following Tax code for this Product"),
     }
 
 product_template()
+
+class product_product(osv.osv):
+    _inherit = 'product.product'
+    _columns = {
+            'default_code' : fields.char('Product Code', size=64, select=True, required=True),
+        }
+    _sql_constraints = [
+        ('name_uniq', 'unique(default_code)', 'Product Reference Code must be unique per Company!'),
+    ]
+    
 
 class product_category(osv.osv):
     _inherit = "product.category"
