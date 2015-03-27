@@ -59,11 +59,14 @@
             <field name="inherit_id" ref="product.product_normal_form_view"/>
             <field name="priority">30</field>
             <field name="arch" type="xml">
+                <field name="categ_id" position="replace">
+                    <field name="categ_id" on_change="onchange_categ(categ_id)"/>
+                </field>
 		        <xpath expr="/form/sheet/notebook/page[@string='Accounting']" position="after">
 		          <page string="Avatax">
 		              <separator string="AvaTax Properties" colspan="4"/>
 			          <group colspan="2" col="2">
-			            <field name="tax_apply"/>
+			            <field name="tax_apply" readonly="1"/>
 	                   	<newline/>
 			            <field name="tax_code_id" attrs="{'required': [('tax_apply','=',True)]}" readonly="1"/>
 			          </group>

@@ -21,8 +21,8 @@
 	            <xpath expr="/form/sheet/notebook/page[@string='Accounting']" position="after">
 	        	    <page string="Avatax">
 	        	        <group col="4" colspan="2">
-		                    <field name="latitude" readonly="1"/>
-		                    <field name="longitude" readonly="1"/>
+		                    <field name="latitude" readonly="1" invisible="1"/>
+		                    <field name="longitude" readonly="1" invisible="1"/>
 		                    <field name="vat_id"/>
 		                </group>
 		                <newline/>
