@@ -142,6 +142,8 @@ class account_invoice(osv.osv):
                 vals['is_add_validate'] = True
             else:
                 vals['is_add_validate'] = False
+            addr = self.pool.get('res.partner').browse(cr, uid, 'partner_invoice_id' in vals and vals['partner_invoice_id'] or vals['partner_id'], context=context)
+            vals['shipping_address'] = str(addr.name+ '\n'+(addr.street or '')+ '\n'+(addr.city and addr.city+', ' or ' ')+(addr.state_id and addr.state_id.name or '')+ ' '+(addr.zip or '')+'\n'+(addr.country_id and addr.country_id.name or ''))    
                 
         if 'tax_add_default' in vals: vals['tax_add_default'] = vals['tax_add_default']
         if 'tax_add_invoice' in vals: vals['tax_add_invoice'] = vals['tax_add_invoice']
@@ -326,6 +328,9 @@ class account_invoice(osv.osv):
     
     
     def button_dummy(self, cr, uid, ids, context=None):
+        for inv in self.browse(cr, uid, ids, context=context):
+            if not inv.invoice_line:
+                raise osv.except_osv(_('No Invoice Lines !'), _('Please create some invoice lines.'))
         self.compute_tax(cr, uid, ids, context=context)
         self.button_reset_taxes(cr, uid, ids, context=None)
         return True
@@ -358,6 +363,7 @@ class account_invoice(osv.osv):
                                                                    invoice.partner_id, invoice.company_id.partner_id.id,
                                                                    shipping_add_id, [line1], invoice.user_id, invoice.exemption_code or None, invoice.exemption_code_id.code or None,
                                                                    context=context).TotalTax
+                        print "ol tax amount ",ol_tax_amt
                         o_tax_amt += ol_tax_amt  #tax amount based on total order line total   
                         invoice_obj.write(cr, uid, [o_line.id], {'tax_amt': ol_tax_amt,})
                 

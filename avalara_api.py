@@ -102,6 +102,10 @@ class AvaTaxService:
             raise osv.except_osv(_('Failed to reach the server'), _(details.reason))
         else:
             if (result.ResultCode != 'Success'):
+                #for w_message in result.Messages.Message:
+                w_message = result.Messages.Message[0]
+                if (w_message._Name == 'AddressRangeError' or  w_message._Name == 'AddressUnknownStreetError' or w_message._Name == 'AddressNotGeocodedError' or w_message._Name == 'NonDeliverableAddressError' ):
+                     raise osv.except_osv(_('Avatax: Warning \n Avatax could not validate the street address.'), _('You can save the address and Avatax will make an attempt to compute taxes based on the zip code if "Attempt automatic address validation" is enabled in the Avatax connector configuration.'))
                 raise osv.except_osv(('Avatax: Error'), _(AvaTaxError(result.ResultCode, result.Messages)))
             else:
                 return result

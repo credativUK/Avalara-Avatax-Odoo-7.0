@@ -23,6 +23,8 @@ import time
 from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
+import time
+
 
 from avalara_api import AvaTaxService, BaseAddress
 from compiler.ast import TryFinally
@@ -41,7 +43,7 @@ class res_partner(osv.osv):
         'latitude': fields.char('Latitude', size=32),
         'longitude': fields.char('Longitude', size=32),
         'validated_on_save': fields.boolean('Validated On Save', help="Indicates if the address is already validated on save before calling the wizard"),
-        'customer_code': fields.char('Customer Code', size=40, required=True),
+        'customer_code': fields.char('Customer Code', size=40),
         'tax_apply': fields.boolean('Tax Calculation',help="Indicates the avatax calculation is compulsory"),
         'tax_exempt': fields.boolean('Is Tax Exempt',help="Indicates the exemption tax calculation is compulsory"),
         'vat_id': fields.char("VAT ID", help="Customers VAT number (Buyer VAT). Identifies the customer as a “Registered Business” and the tax engine will utilize that information in the tax decision process."),
@@ -136,6 +138,36 @@ class res_partner(osv.osv):
             'res_model': 'res.partner',
             'type':'ir.actions.act_window',
             'context': {'search_default_customer':1},
+        }
+        
+    def varify_address_validatation(self, cr, uid, ids, context=None):
+        """Method is used to verify of state and country """
+        view_ref = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'avalara_salestax', 'view_avalara_salestax_address_validate')
+        view_id = view_ref and view_ref[1] or False,
+        this = self.browse(cr, uid, ids, context=context)[0]
+        
+        address_obj = self.pool.get('res.partner')
+        address = address_obj.read(cr, uid, ids[0], ['street', 'street2', 'city', 'state_id', 'zip', 'country_id'], context=context)
+        address['state_id'] = address.get('state_id') and address['state_id'][0]
+        address['country_id'] = address.get('country_id') and address['country_id'][0]
+        
+        # Get the valid result from the AvaTax Address Validation Service
+        valid_address = address_obj._validate_address(cr, uid, address, context=context)
+        
+        wizard_id = self.pool.get("avalara.salestax.address.validate").create(
+            cr, uid, {}, context=dict(context, active_ids=ids, active_id=ids[0]))
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Address Validation',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': False,
+            'res_model': 'avalara.salestax.address.validate',
+            'nodestroy': True,
+            'res_id': wizard_id, # assuming the many2one is (mis)named 'teacher'
+            'target':'new',
+            'context': dict(context, active_ids=ids),
         }
 
     def _validate_address(self, cr, uid, address, avatax_config=False, context=None):
@@ -239,7 +271,10 @@ class res_partner(osv.osv):
                             'validation_method': 'avatax',
                             'validated_on_save': True
                         })
-        return super(res_partner, self).create(cr, uid, vals, context)
+        cust_id = super(res_partner, self).create(cr, uid, vals, context)
+        #Auto populate customer code
+        self.write(cr, uid, [cust_id], {'customer_code': str(int(time.time()))+'-Cust-'+str(cust_id)})
+        return cust_id
 
     def write(self, cr, uid, ids, vals, context=None):
         if not vals:

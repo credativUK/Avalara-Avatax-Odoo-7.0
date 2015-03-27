@@ -67,10 +67,9 @@ class avalara_salestax_address_validate(osv.osv_memory):
 
     def default_get(self, cr, uid, fields, context=None):
         """  Returns the default values for the fields. """
-
         res = super(avalara_salestax_address_validate, self).default_get(cr, uid, fields, context)
 
-        if context.get('active_id', False) and context.get('active_model', False) == 'res.partner':
+        if context.get('active_id', False):
             address_obj = self.pool.get('res.partner')
             address_obj.write(cr, uid, [context['active_id']], {
                                                         'latitude': '',
@@ -85,7 +84,6 @@ class avalara_salestax_address_validate(osv.osv_memory):
             address['country_id'] = address.get('country_id') and address['country_id'][0]
             # Get the valid result from the AvaTax Address Validation Service
             valid_address = address_obj._validate_address(cr, uid, address, context=context)
-
             if 'original_street' in fields:
                 res.update({'original_street': address['street']})
             if 'original_street2' in fields:

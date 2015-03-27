@@ -15,7 +15,7 @@
         	
 	            <field name="parent_id" position="before">
 	                <label for="customer_code" class="oe_edit_only"/>
-	                <field name="customer_code" placeholder="Customer/Vendor Code"/>
+	                <field name="customer_code" placeholder="Customer/Vendor Code" /> <!-- readonly="1" -->
 	            </field>
 	            
 	            <xpath expr="/form/sheet/notebook/page[@string='Accounting']" position="after">
@@ -29,7 +29,7 @@
 		          		<group colspan="2" col="6" string="Validation">
 		                   <field name="date_validation"/>
 		                   <field name="validation_method"/>
-		                   <button name="%(action_avalara_salestax_address_validate)d" string="_Validate" type="action" icon="terp-camera_test" colspan="2" context="{'from_validate_button': True}"/>
+		                   <button name="varify_address_validatation" string="_Validate" type="object" icon="terp-camera_test" colspan="2" context="{'from_validate_button': True}"/>
 		                </group>
 		                
 		          		<group col="4" colspan="4" string="TAX Exemption">

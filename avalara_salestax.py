@@ -141,7 +141,7 @@ class avalara_salestax(osv.osv):
         'request_timeout': fields.integer('Request Timeout', help="Defines AvaTax request time out length, AvaTax best practices prescribes default setting of 300 seconds"),
         'company_code': fields.char('Company Code', size=64, required=True, help="The company code as defined in the Admin Console of AvaTax"),
         'logging': fields.boolean('Enable Logging', help="Enables detailed AvaTax transaction logging within application"),
-        'address_validation': fields.boolean('Attempt automatic address validation', help="Check to disable address validation"),
+        'address_validation': fields.boolean('Attempt automatic address validation!', help="Check to disable address validation"),
         'enable_address_validation': fields.boolean('Enable Address Validation', help="Check to Enable address validation"),
         'result_in_uppercase': fields.boolean('Return validation results in upper case', help="Check is address validation results desired to be in upper case"),
         'validation_on_save': fields.boolean('Validate on save for customer profile', help="Check if each address when saved should be validated"),
