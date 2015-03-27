@@ -15,7 +15,7 @@
         	
 	            <field name="parent_id" position="before">
 	                <label for="customer_code" class="oe_edit_only"/>
-	                <field name="customer_code" placeholder="Customer/Vendor Code" readonly="1"/>
+	                <field name="customer_code" placeholder="Customer/Vendor Code" /> <!-- readonly="1" -->
 	            </field>
 	            
 	            <xpath expr="/form/sheet/notebook/page[@string='Accounting']" position="after">

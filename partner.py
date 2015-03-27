@@ -23,6 +23,8 @@ import time
 from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
+import time
+
 
 from avalara_api import AvaTaxService, BaseAddress
 from compiler.ast import TryFinally
@@ -271,7 +273,7 @@ class res_partner(osv.osv):
                         })
         cust_id = super(res_partner, self).create(cr, uid, vals, context)
         #Auto populate customer code
-        self.write(cr, uid, [cust_id], {'customer_code': 'Cust-'+str(cust_id)})
+        self.write(cr, uid, [cust_id], {'customer_code': str(int(time.time()))+'-Cust-'+str(cust_id)})
         return cust_id
 
     def write(self, cr, uid, ids, vals, context=None):
