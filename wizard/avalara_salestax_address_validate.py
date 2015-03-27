@@ -60,7 +60,7 @@ class avalara_salestax_address_validate(osv.osv_memory):
             if not avatax_config:
                 raise osv.except_osv(_('Avatax: Service Not Setup'), _("The AvaTax Tax Service is not active."))
             address = address_obj.browse(cr, uid, context['active_id'], context=context)
-            if avatax_config.validation_on_save:
+            if address.validated_on_save and avatax_config.validation_on_save:
                 raise osv.except_osv(_('Avatax: Address Already Validated'), _("Address Validation on Save is already active in the AvaTax Configuration."))
             address_obj.check_avatax_support(cr, uid, avatax_config, address.country_id and address.country_id.id or False, context=context)
         return True

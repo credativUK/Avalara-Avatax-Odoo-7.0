@@ -54,19 +54,6 @@ class account_invoice(osv.osv):
     """Inherit to implement the tax calculation using avatax API"""
     _inherit = "account.invoice"
     
-    def onchange_partner_id(self, cr, uid, ids, type, partner_id,\
-            date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False):
-        res = super(account_invoice, self).onchange_partner_id(cr, uid, ids, type, partner_id,\
-            date_invoice, payment_term, partner_bank_id, company_id)
-        
-        res_obj = self.pool.get('res.partner').browse(cr, uid, partner_id)
-        res['value']['exemption_code'] = res_obj.exemption_number or ''
-        res['value']['exemption_code_id'] = res_obj.exemption_code_id.id or None
-        if res_obj.validation_method:res['value']['is_add_validate'] = True
-        else:res['value']['is_add_validate'] = False
-        return res
-        
-    
     
     def _amount_all(self, cr, uid, ids, name, args, context=None):
         res = super(account_invoice, self)._amount_all(cr, uid, ids, name, args, context=context)
@@ -110,16 +97,8 @@ class account_invoice(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if vals['partner_id']:
             res_obj = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
-            if 'exemption_code' in vals:
-                vals['exemption_code'] = vals['exemption_code']
-            else:
-                vals['exemption_code'] = res_obj.exemption_number or ''
-            if 'exemption_code_id' in vals:
-                vals['exemption_code_id'] = vals['exemption_code_id']
-            else:
-                vals['exemption_code_id'] = res_obj.exemption_code_id and res_obj.exemption_code_id.id or False
-#            vals['exemption_code'] = res_obj.exemption_number or ''
-#            vals['exemption_code_id'] = res_obj.exemption_code_id.id or None
+            vals['exemption_code'] = res_obj.exemption_number or ''
+            vals['exemption_code_id'] = res_obj.exemption_code_id.id or None
             if res_obj.validation_method:vals['is_add_validate'] = True
 #            vals['shipping_add_id'] = vals['partner_id']
             addr = self.pool.get('res.partner').browse(cr, uid, 'partner_invoice_id' in vals and vals['partner_invoice_id'] or vals['partner_id'], context=context)
@@ -130,14 +109,8 @@ class account_invoice(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if 'partner_id' in vals:
             res_obj = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
-            if 'exemption_code' in vals:
-                vals['exemption_code'] = vals['exemption_code']
-            else:
-                vals['exemption_code'] = res_obj.exemption_number or ''
-            if 'exemption_code_id' in vals:
-                vals['exemption_code_id'] = vals['exemption_code_id']
-            else:
-                vals['exemption_code_id'] = res_obj.exemption_code_id and res_obj.exemption_code_id.id or False
+            vals['exemption_code'] = res_obj.exemption_number or ''
+            vals['exemption_code_id'] = res_obj.exemption_code_id.id or None
             if res_obj.validation_method:
                 vals['is_add_validate'] = True
             else:
@@ -279,8 +252,8 @@ class account_invoice(osv.osv):
         s_tax_amt = 0.0
         
         for invoice in self.browse(cr, uid, ids, context=context):
-            c_code = partner_obj.browse(cr, uid, invoice.partner_id.id).country_id.code or False
-            if avatax_config and not avatax_config.disable_tax_calculation and invoice.type in ['out_invoice','out_refund'] and c_code in ['US', 'CA']:
+            res_obj = partner_obj.browse(cr, uid, invoice.partner_id.id)
+            if avatax_config and not avatax_config.disable_tax_calculation and invoice.type in ['out_invoice','out_refund']:
                 shipping_add_id = get_address_for_tax(self, cr, uid, [invoice.id], context)
                 sign = invoice.type == 'out_invoice' and 1 or -1
                 lines1 = self.create_lines(cr, uid, invoice.invoice_line, sign)
@@ -290,9 +263,9 @@ class account_invoice(osv.osv):
                 account_tax_obj._get_compute_tax(cr, uid, avatax_config, invoice.date_invoice,
                                                    invoice.internal_number, not invoice.invoice_doc_no and 'SalesInvoice' or 'ReturnInvoice',
                                                    invoice.partner_id, invoice.company_id.partner_id.id,
-                                                   shipping_add_id, lines1, invoice.user_id, invoice.exemption_code or None, invoice.exemption_code_id.code or None, 
-                                                   True, invoice.date_invoice,
-                                                   invoice.invoice_doc_no, invoice.location_code or '', context=context)
+                                                   shipping_add_id, lines1, invoice.user_id,
+                                                   True, invoice.invoice_date,
+                                                   invoice.invoice_doc_no, invoice.location_code or None, context=context)
             
         self.write(cr, uid, ids, {'state':'paid'}, context=context)
         return True
@@ -307,8 +280,8 @@ class account_invoice(osv.osv):
         
         avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid)
         for invoice in self.browse(cr, uid, ids, context=context):
-            c_code = partner_obj.browse(cr, uid, invoice.partner_id.id).country_id.code or False
-            if avatax_config and not avatax_config.disable_tax_calculation and c_code in ['CA','US']:
+            res_obj = partner_obj.browse(cr, uid, invoice.partner_id.id)
+            if avatax_config and not avatax_config.disable_tax_calculation:
                 pass
             else:
                 for o_line in invoice.invoice_line:
@@ -335,8 +308,7 @@ class account_invoice(osv.osv):
         o_tax_amt = 0.0
         s_tax_amt = 0.0
         for invoice in self.browse(cr, uid, ids, context=context):
-            c_code = partner_obj.browse(cr, uid, invoice.partner_id.id).country_id.code or False
-            if avatax_config and not avatax_config.disable_tax_calculation and invoice.type in ['out_invoice','out_refund'] and c_code in ['US','CA']:
+            if avatax_config and not avatax_config.disable_tax_calculation and invoice.type in ['out_invoice','out_refund']:
                 shipping_add_id = get_address_for_tax(self, cr, uid, [invoice.id], context)
                 sign = invoice.type == 'out_invoice' and 1 or -1
                 lines1 = self.create_lines(cr, uid, invoice.invoice_line, sign)
@@ -347,7 +319,7 @@ class account_invoice(osv.osv):
                         ol_tax_amt =  account_tax_obj._get_compute_tax(cr, uid, avatax_config, invoice.date_invoice,
                                                                    invoice.internal_number, 'SalesOrder',
                                                                    invoice.partner_id, invoice.company_id.partner_id.id,
-                                                                   shipping_add_id, [line1], invoice.user_id, invoice.exemption_code or None, invoice.exemption_code_id.code or None,
+                                                                   shipping_add_id, [line1], invoice.user_id,
                                                                    context=context).TotalTax
                         o_tax_amt += ol_tax_amt  #tax amount based on total order line total   
                         invoice_obj.write(cr, uid, [o_line.id], {'tax_amt': ol_tax_amt,})
@@ -357,7 +329,7 @@ class account_invoice(osv.osv):
                         sl_tax_amt = account_tax_obj._get_compute_tax(cr, uid, avatax_config, invoice.date_invoice,
                                                                    invoice.internal_number, 'SalesOrder',
                                                                    invoice.partner_id, invoice.company_id.partner_id.id,
-                                                                   shipping_add_id, [line2], invoice.user_id, invoice.exemption_code or None, invoice.exemption_code_id.code or None,
+                                                                   shipping_add_id, [line2], invoice.user_id,
                                                                    context=context).TotalTax
                         s_tax_amt += sl_tax_amt #tax amount based on total shipping line total
                         ship_order_line.write(cr, uid, [s_line.id], {'tax_amt': sl_tax_amt,})
@@ -377,9 +349,9 @@ class account_invoice(osv.osv):
                 account_tax_obj._get_compute_tax(cr, uid, avatax_config, invoice.date_invoice,
                                                    invoice.internal_number, not invoice.invoice_doc_no and 'SalesInvoice' or 'ReturnInvoice',
                                                    invoice.partner_id, invoice.company_id.partner_id.id,
-                                                   shipping_add_id, lines1, invoice.user_id, invoice.exemption_code or None, invoice.exemption_code_id.code or None,
-                                                   False, invoice.date_invoice,
-                                                   invoice.invoice_doc_no, invoice.location_code or '', context=context)
+                                                   shipping_add_id, lines1, invoice.user_id,
+                                                   False, invoice.invoice_date,
+                                                   invoice.invoice_doc_no, invoice.location_code or None, context=context)
             else:
                 for o_line in invoice.invoice_line:
                     invoice_obj.write(cr, uid, [o_line.id], {'tax_amt': 0.0,})
@@ -468,8 +440,8 @@ class account_invoice(osv.osv):
         res = super(account_invoice, self).action_cancel(cr, uid, ids, *args)
 
         for invoice in self.browse(cr, uid, ids, *args):
-            c_code = partner_obj.browse(cr, uid, invoice.partner_id.id).country_id.code or False
-            if avatax_config and not avatax_config.disable_tax_calculation and invoice.type in ['out_invoice','out_refund'] and c_code in ['US','CA']:
+            res_obj = partner_obj.browse(cr, uid, invoice.partner_id.id)
+            if avatax_config and not avatax_config.disable_tax_calculation and invoice.internal_number:
                 doc_type = invoice.type == 'out_invoice' and 'SalesInvoice' or 'ReturnInvoice'
                 account_tax_obj.cancel_tax(cr, uid, avatax_config, invoice.internal_number, doc_type, 'DocVoided')
         self.write(cr, uid, ids, {'number': '', 'internal_number':''})
@@ -479,11 +451,11 @@ class account_invoice(osv.osv):
         avatax_config_obj = self.pool.get('avalara.salestax')
         avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid)
         partner_obj = self.pool.get('res.partner')
-        c_code = partner_obj.browse(cr, uid, inv.partner_id.id).country_id.code or False
+        res_obj = partner_obj.browse(cr, uid, inv.partner_id.id)
         
         
         #invoice type check when avalara config working and supplier invoice refund by default functionality
-        if avatax_config and not avatax_config.disable_tax_calculation and inv.type in ['out_invoice', 'out_refund'] and c_code in ['US','CA']:
+        if avatax_config and not avatax_config.disable_tax_calculation and inv.type in ['out_invoice', 'out_refund']:
             if not inv.tax_line:
                 for tax in compute_taxes.values():
                     ait_obj.create(cr, uid, tax)
@@ -510,7 +482,6 @@ class account_invoice(osv.osv):
                         raise osv.except_osv(_('Warning !'), _('Tax amount different !\nClick on compute to update tax base'))
         else:
             super(account_invoice, self).check_tax_lines(cr, uid, inv, compute_taxes, ait_obj)
-        return True
             
 account_invoice()
 
@@ -567,8 +538,8 @@ class account_invoice_tax(osv.osv):
         o_tax_amt = 0.0
         s_tax_amt = 0.0
         partner_obj = self.pool.get('res.partner')
-        c_code = partner_obj.browse(cr, uid, invoice.partner_id.id).country_id.code or False
-        if avatax_config and not avatax_config.disable_tax_calculation and invoice.type in ['out_invoice','out_refund'] and c_code in ['US', 'CA']:
+        res_obj = partner_obj.browse(cr, uid, invoice.partner_id.id)
+        if avatax_config and not avatax_config.disable_tax_calculation and invoice.type in ['out_invoice','out_refund']:
             shipping_add_id = get_address_for_tax(self, cr, uid, [invoice_id], context)
             if invoice.invoice_line:
                 lines1 = self.create_lines(cr, uid, invoice.invoice_line)
@@ -579,7 +550,7 @@ class account_invoice_tax(osv.osv):
                         ol_tax_amt =  account_tax_obj._get_compute_tax(cr, uid, avatax_config, invoice.date_invoice or time.strftime('%Y-%m-%d'),
                                                                    invoice.internal_number, 'SalesOrder',
                                                                    invoice.partner_id, invoice.company_id.partner_id.id,
-                                                                   shipping_add_id, [line1], invoice.user_id, invoice.exemption_code or None, invoice.exemption_code_id.code or None,
+                                                                   shipping_add_id, [line1], invoice.user_id,
                                                                    context=context).TotalTax
                         o_tax_amt += ol_tax_amt
                         invoice_line_obj.write(cr, uid, [o_line.id], {'tax_amt': ol_tax_amt,})
@@ -590,7 +561,7 @@ class account_invoice_tax(osv.osv):
                             sl_tax_amt = account_tax_obj._get_compute_tax(cr, uid, avatax_config, invoice.date_invoice or time.strftime('%Y-%m-%d'),
                                                                        invoice.internal_number, 'SalesOrder',
                                                                        invoice.partner_id, invoice.company_id.partner_id.id,
-                                                                       shipping_add_id, [line2], invoice.user_id, invoice.exemption_code or None, invoice.exemption_code_id.code or None,
+                                                                       shipping_add_id, [line2], invoice.user_id,
                                                                        context=context).TotalTax
                             s_tax_amt += sl_tax_amt #tax amount based on total shipping line total
                             ship_order_line.write(cr, uid, [s_line.id], {'tax_amt': sl_tax_amt,})
@@ -606,7 +577,7 @@ class account_invoice_tax(osv.osv):
                 lines1.extend(lines2)
                 tax_amount = account_tax_obj._get_compute_tax(cr, uid, avatax_config, invoice.date_invoice or time.strftime('%Y-%m-%d'),
                                                             invoice.internal_number, 'SalesOrder', invoice.partner_id, invoice.company_id.partner_id.id,
-                                                            shipping_add_id, lines1, invoice.user_id, invoice.exemption_code or None, invoice.exemption_code_id.code or None,
+                                                            shipping_add_id, lines1, invoice.user_id,
                                                             context=context).TotalTax
                 
                 for line in invoice.invoice_line:
@@ -782,8 +753,8 @@ class account_invoice_line(osv.osv):
         company_currency = invoice.company_id.currency_id.id
 
         partner_obj = self.pool.get('res.partner')
-        c_code = partner_obj.browse(cr, uid, invoice.partner_id.id).country_id.code or False
-        if avatax_config and not avatax_config.disable_tax_calculation and c_code in ['US', 'CA']:
+        res_obj = partner_obj.browse(cr, uid, invoice.partner_id.id)
+        if avatax_config and not avatax_config.disable_tax_calculation:
             for line in invoice.invoice_line:
                 mres = self.move_line_get_item(cr, uid, line, context)
                 if not mres:
