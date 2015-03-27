@@ -21,7 +21,7 @@
 
 {
     "name" : "OpenERP Avalara connector for sales tax calculation",
-    "version" : "1.0.1",
+    "version" : "1.0.15",
     "author" : 'Kranbery Technologies',
     'summary': 'Quotations, Sales Orders, Invoicing',
     "description": """ 
@@ -50,7 +50,7 @@ Some important points.
 
 5. Make sure you validate customer address.
 
-Improvement for version 1.0.1
+Improvement for version 1.0.15
 
 Following improvements are made after first review:
 

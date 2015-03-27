@@ -64,11 +64,9 @@ class AvaTaxService:
 
     def my_security(self, username, password):
         """Using username and password as key to verify user account to access avalara API's"""
-        token = suds.wsse.UsernameToken(username, password)
-
-        token.setnonce()
-
-        token.setcreated()
+        token = suds.wsse.UsernameToken(username, password)    
+        token.setcreated(datetime.datetime.utcnow())            
+        token.setnonce(self)                
         security = suds.wsse.Security()
         security.tokens.append(token)
         return security
