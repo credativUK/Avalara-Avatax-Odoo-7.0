@@ -68,7 +68,7 @@
 			          <group colspan="2" col="2">
 			            <field name="tax_apply"/> <!--   readonly="1" -->
 	                   	<newline/>
-			            <field name="tax_code_id" attrs="{'required': [('tax_apply','=',True)]}" /> <!--  readonly="1" -->
+			            <field name="tax_code_id" attrs="{'invisible': [('tax_apply','=',False)],'required': [('tax_apply','=',True)]}" /> <!--  readonly="1" -->
 			          </group>
 		          </page>
 		        </xpath>
