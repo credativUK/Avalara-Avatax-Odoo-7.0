@@ -38,7 +38,7 @@ class account_tax(osv.osv):
         return comp.currency_id.name
 
     def _get_compute_tax(self, cr, uid, avatax_config, doc_date, doc_code, doc_type, partner, ship_from_address_id, shipping_address_id,
-                          lines, user=None, commit=False, invoice_date=False, reference_code=False, context=None):
+                          lines, user=None, commit=False, invoice_date=False, reference_code=False, location_code=False, context=None):
         address_obj = self.pool.get('res.partner')
 
         currency_code = self._get_currency(cr, uid, context)
@@ -88,7 +88,7 @@ class account_tax(osv.osv):
                                  partner.customer_code, doc_code, origin, destination,
                                  lines, partner.exemption_number or None,
                                  partner.exemption_code_id and partner.exemption_code_id.code or None,
-                                 user and user.name or None, commit, invoice_date, reference_code, currency_code, partner.vat_id or None)
+                                 user and user.name or None, commit, invoice_date, reference_code, location_code or None, currency_code, partner.vat_id or None)
         
         return result
 

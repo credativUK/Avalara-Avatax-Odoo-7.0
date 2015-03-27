@@ -72,6 +72,14 @@ class avalara_salestax_address_validate(osv.osv_memory):
 
         if context.get('active_id', False) and context.get('active_model', False) == 'res.partner':
             address_obj = self.pool.get('res.partner')
+            address_obj.write(cr, uid, [context['active_id']], {
+                                                        'latitude': '',
+                                                        'longitude': '',
+                                                        'date_validation': False,
+                                                        'validation_method': '',
+                                                        })
+            cr.commit()     #Need to forcefully commit data when address not validate after changes in validate address
+            
             address = address_obj.read(cr, uid, context['active_id'], ['street', 'street2', 'city', 'state_id', 'zip', 'country_id'], context=context)
             address['state_id'] = address.get('state_id') and address['state_id'][0]
             address['country_id'] = address.get('country_id') and address['country_id'][0]

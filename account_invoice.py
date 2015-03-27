@@ -100,7 +100,9 @@ class account_invoice(osv.osv):
             vals['exemption_code'] = res_obj.exemption_number or ''
             vals['exemption_code_id'] = res_obj.exemption_code_id.id or None
             if res_obj.validation_method:vals['is_add_validate'] = True
-            vals['shipping_add_id'] = vals['partner_id']
+#            vals['shipping_add_id'] = vals['partner_id']
+            addr = self.pool.get('res.partner').browse(cr, uid, 'partner_invoice_id' in vals and vals['partner_invoice_id'] or vals['partner_id'], context=context)
+            vals['shipping_address'] = str(addr.name+ '\n'+(addr.street or '')+ '\n'+(addr.city and addr.city+', ' or ' ')+(addr.state_id and addr.state_id.name or '')+ ' '+(addr.zip or '')+'\n'+(addr.country_id and addr.country_id.name or ''))
         
         return super(account_invoice, self).create(cr, uid, vals, context=context)
 #    
@@ -113,10 +115,11 @@ class account_invoice(osv.osv):
                 vals['is_add_validate'] = True
             else:
                 vals['is_add_validate'] = False
+                
         if 'tax_add_default' in vals: vals['tax_add_default'] = vals['tax_add_default']
         if 'tax_add_invoice' in vals: vals['tax_add_invoice'] = vals['tax_add_invoice']
         if 'tax_add_shipping' in vals: vals['tax_add_shipping'] = vals['tax_add_shipping']
-        if 'shipping_add_id' in vals: vals['shipping_add_id'] = vals['shipping_add_id']
+        if 'shipping_address' in vals: vals['shipping_address'] = vals['shipping_address']
         
         return super(account_invoice, self).write(cr, uid, ids, vals, context=context)
     
@@ -157,21 +160,14 @@ class account_invoice(osv.osv):
         'tax_add_default': fields.boolean('Default Address', readonly=True, states={'draft':[('readonly',False)]}),
         'tax_add_invoice': fields.boolean('Invoice Address', readonly=True, states={'draft':[('readonly',False)]}),
         'tax_add_shipping': fields.boolean('Delivery Address', readonly=True, states={'draft':[('readonly',False)]}),
-        'shipping_add_id': fields.many2one('res.partner', 'Tax Address', change_default=True, track_visibility='always'),  
+#        'shipping_add_id': fields.many2one('res.partner', 'Tax Address', change_default=True, track_visibility='always'),
+        'shipping_address': fields.text('Tax Address'),
+        'location_code': fields.char('Location code', size=128, readonly=True, states={'draft':[('readonly',False)]}),  
     }
     
     _defaults = {
-        'tax_add_default': True,
+        'tax_add_invoice': True,
         }
-    
-
-#    def _amount_shipment_tax(self, cr, uid, shipment_taxes, shipment_charge):
-#        val = 0.0
-#        for c in self.pool.get('account.tax').compute_all(cr, uid, shipment_taxes, shipment_charge, 1)['taxes']:
-#            val += c.get('amount', 0.0)
-#        return val
-#    
-    
     
     def finalize_invoice_move_lines(self, cr, uid, invoice_browse, move_lines):
         """After validate invoice create finalize invoice move lines with shipping amount
@@ -269,7 +265,7 @@ class account_invoice(osv.osv):
                                                    invoice.partner_id, invoice.company_id.partner_id.id,
                                                    shipping_add_id, lines1, invoice.user_id,
                                                    True, invoice.invoice_date,
-                                                   invoice.invoice_doc_no, context=context)
+                                                   invoice.invoice_doc_no, invoice.location_code or None, context=context)
             
         self.write(cr, uid, ids, {'state':'paid'}, context=context)
         return True
@@ -355,7 +351,7 @@ class account_invoice(osv.osv):
                                                    invoice.partner_id, invoice.company_id.partner_id.id,
                                                    shipping_add_id, lines1, invoice.user_id,
                                                    False, invoice.invoice_date,
-                                                   invoice.invoice_doc_no, context=context)
+                                                   invoice.invoice_doc_no, invoice.location_code or None, context=context)
             else:
                 for o_line in invoice.invoice_line:
                     invoice_obj.write(cr, uid, [o_line.id], {'tax_amt': 0.0,})
