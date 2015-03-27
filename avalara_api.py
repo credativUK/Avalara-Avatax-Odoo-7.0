@@ -104,7 +104,7 @@ class AvaTaxService:
                 w_message = result.Messages.Message[0]
                 if (w_message._Name == 'AddressRangeError' or  w_message._Name == 'AddressUnknownStreetError' or w_message._Name == 'AddressNotGeocodedError' or w_message._Name == 'NonDeliverableAddressError' ):
                      raise osv.except_osv(_('AvaTax: Warning \n AvaTax could not validate the street address.'), _('You can save the address and AvaTax will make an attempt to compute taxes based on the zip code if "Attempt automatic address validation" is enabled in the Avatax connector configuration.'))
-                raise osv.except_osv(('AvaTax: Error'), _(AvaTaxError(result.ResultCode, result.Messages)))
+                raise osv.except_osv(_('AvaTax: Error\n'+"Information reported from Avatax Service, please check your information and/or settings in the ERP.\n\n"), _(AvaTaxError(result.ResultCode, result.Messages)))
             else:
                 return result
             
@@ -170,6 +170,8 @@ class AvaTaxService:
         
         addresses = self.taxSvc.factory.create('ArrayOfBaseAddress')
         addresses.BaseAddress = [origin, destination]
+        if origin.Line1 == False:         
+            raise osv.except_osv(_('AvaTax: Warning !'), _('Please set the Company Address in the partner information and validate.  We are checking against the first line of the address and it\'s empty.  \n\n Typically located in Sales->Customers, you have to clear "Customers" from search filter and type in your own company name.  Ensure the address is filled out and go to Avatax tab in the partner information and validate the address. Save partner update when done.'))
         request.Addresses = addresses
         request.OriginCode = '0' # Referencing an address above
         request.DestinationCode = '1' # Referencing an address above

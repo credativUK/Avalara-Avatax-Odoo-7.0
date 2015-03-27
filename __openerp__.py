@@ -21,7 +21,7 @@
 
 {
     "name" : "OpenERP Avalara connector for sales tax calculation",
-    "version" : "1.0.15",
+    "version" : "1.0.16",
     "author" : 'Kranbery Technologies',
     'summary': 'Quotations, Sales Orders, Invoicing',
     "description": """ 
@@ -50,15 +50,16 @@ Some important points.
 
 5. Make sure you validate customer address.
 
-Improvement for version 1.0.15
+Improvement for version 1.0.16
 
 Following improvements are made after first review:
 
-1. Country wise state code validation on address form.
+1. Improved Error Handling and Messages
 
-2. Updated rights for users.
+2. Resolved issues with mult-company transactions
 
-3. Resolve invoice creation issues from delivery order.
+
+
      
 Note: Make sure you have proper internet connection.
 """,
@@ -78,6 +79,7 @@ Note: Make sure you have proper internet connection.
     "account_invoice_workflow.xml",
     "account_invoice_view.xml",
     "sale_order_view.xml",
+    "warning_view.xml",
     "security/avalara_salestax_security.xml",
     "security/ir.model.access.csv",
     ],

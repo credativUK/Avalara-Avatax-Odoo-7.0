@@ -293,6 +293,10 @@ class sale_order(osv.osv):
         o_tax_amt = 0.0
         s_tax_amt = 0.0
         lines = []
+        
+        # Make sure Avatax is configured
+        if not avatax_config:
+            raise osv.except_osv(_('AvaTax: Error'), _('Your Avatax Countries settings are not configured. You need a country code in the Countries section.  \nIf you have a multi-company installation, you must add settings for each company.  \n\nYou can update settings in Avatax->Avatax API.'))
         for order in self.browse(cr, uid, ids):
             c_code = partner_obj.browse(cr, uid, order.partner_id.id).country_id.code or False
             cs_code = []        #Countries where Avalara address validation is enabled

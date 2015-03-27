@@ -43,7 +43,7 @@ class res_partner(osv.osv):
         'latitude': fields.char('Latitude', size=32),
         'longitude': fields.char('Longitude', size=32),
         'validated_on_save': fields.boolean('Validated On Save', help="Indicates if the address is already validated on save before calling the wizard"),
-        'customer_code': fields.char('Customer Code', size=40, required=True),
+        'customer_code': fields.char('Customer Code', size=40, required=False),
         'tax_apply': fields.boolean('Tax Calculation',help="Indicates the avatax calculation is compulsory"),
         'tax_exempt': fields.boolean('Is Tax Exempt',help="Indicates the exemption tax calculation is compulsory"),
         'vat_id': fields.char("VAT ID", help="Customers VAT number (Buyer VAT). Identifies the customer as a “Registered Business” and the tax engine will utilize that information in the tax decision process."),

@@ -42,7 +42,7 @@ class account_tax(osv.osv):
         address_obj = self.pool.get('res.partner')
         currency_code = self._get_currency(cr, uid, context)
         if not partner.customer_code:
-            raise osv.except_osv(_('AvaTax: Warning !'), _('Customer Code for customer %s not defined.\n\n  You can edit the Customer Code in customer profile.'% (partner.name)))
+            raise osv.except_osv(_('AvaTax: Warning !'), _('Customer Code for customer %s not defined.\n\n  You can edit the Customer Code in customer profile. You can fix by clicking "Generate Customer Code" button in the customer contact information"'% (partner.name)))
         
         if not shipping_address_id:
             raise osv.except_osv(_('AvaTax: No Shipping Address Defined !'), _('There is no shipping address defined for the partner.'))        

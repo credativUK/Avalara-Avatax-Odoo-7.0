@@ -46,14 +46,12 @@
                     <field name="location_code" readonly="1"/>
                     <field name="is_add_validate" readonly="1" invisible="1"/>
                 </xpath>
-                
-				<button name="button_reset_taxes" states="draft,proforma2"
-                                        string="(update)" class="oe_link oe_edit_only"
-                                        type="object" help="Recompute taxes and total" position="replace">
-				     <button name="button_reset_taxes" states="draft,proforma2"
-                                        string="Compute Taxes" class="oe_link oe_edit_only"
-                                        type="object" help="Recompute taxes and total"/>
-				 </button>
+				
+				<button name="button_reset_taxes" position="replace">
+ 				     <button name="button_reset_taxes" states="draft,proforma2"
+                                         string="Compute Taxes" class="oe_link oe_edit_only"
+                                         type="object" help="Recompute taxes and total"/>
+				</button>                                         				 
 				 
 				<xpath expr="/form/sheet/group" position="after">
 				    <group colspan="4" col="4" string="Avalara Tax on...">
@@ -96,14 +94,12 @@
                         </tree>
                     </field>
                 </field> -->
-                
-				<button name="button_reset_taxes" states="draft,proforma2"
-                                        string="(update)" class="oe_link oe_edit_only"
-                                        type="object" help="Recompute taxes and total" position="replace">
-				     <button name="button_reset_taxes" states="draft,proforma2"
-                                        string="Compute Taxes" class="oe_link oe_edit_only"
-                                        type="object" help="Recompute taxes and total"/>
-				 </button>
+
+				<button name="button_reset_taxes" position="replace">
+ 				     <button name="button_reset_taxes" states="draft,proforma2"
+                                         string="Compute Taxes" class="oe_link oe_edit_only"
+                                         type="object" help="Recompute taxes and total"/>
+				</button>                                         				 
 				     
             </field>
         </record>
@@ -134,9 +130,6 @@
 		            <attribute name="readonly">0</attribute>
 		        </field>
 		    </field>
-		</record>
-                
-    
-
+		</record>                   
     </data>
 </openerp>

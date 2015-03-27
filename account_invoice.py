@@ -635,11 +635,14 @@ class account_invoice_tax(osv.osv):
                                                             context=context).TotalTax
                 
                 for line in invoice.invoice_line:
-                    tax_id = account_tax_obj.search(cr, uid, [('name','=','AVATAX')])
+                    tax_id  = account_tax_obj.search(cr, uid,
+                                [('name','=','AVATAX'),
+                                ('company_id', '=', invoice.company_id.id)])
+                    
                     tax_brw = account_tax_obj.browse(cr, uid, tax_id[0])
                     taxes= account_tax_obj.browse(cr, uid, tax_id)
                     if not tax_brw.account_collected_id or not tax_brw.account_paid_id or not tax_brw.base_code_id or not tax_brw.tax_code_id or not tax_brw.ref_base_code_id or not tax_brw.ref_tax_code_id:
-                        raise osv.except_osv(_('AvaTax: Warning !'), _('Please configure tax code information in "AVATAX" settings \n\n Accounting->Configuration->Taxes->Taxes'))
+                        raise osv.except_osv(_('AvaTax: Warning !'), _('Please configure tax code information in "AVATAX" settings.  The documentation will assist you in proper configuration of all the tax code settings as well as how they relate to the product. \n\n Accounting->Configuration->Taxes->Taxes'))
                     
                     if tax_id:                                            
                         for tax in account_tax_obj.compute_all(cr, uid, taxes, (line.price_unit* (1-(line.discount or 0.0)/100.0)), line.quantity, line.product_id, invoice.partner_id)['taxes']:
@@ -809,6 +812,11 @@ class account_invoice_line(osv.osv):
         partner_obj = self.pool.get('res.partner')
         c_code = partner_obj.browse(cr, uid, invoice.partner_id.id).country_id.code or False
         cs_code = []        #Countries where Avalara address validation is enabled
+
+        # Make sure Avatax is configured
+        if not avatax_config:
+            raise osv.except_osv(_('AvaTax: Error'), _('Your Avatax Countries settings are not configured. You need a country code in the Countries section.  \nIf you have a multi-company installation, you must add settings for each company.  \n\nYou can update settings in Avatax->Avatax API.'))
+        
         for c_brw in avatax_config.country_ids:
             cs_code.append(str(c_brw.code))
         if avatax_config and not avatax_config.disable_tax_calculation and c_code in cs_code:
