@@ -2,6 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
+#    Copyright (C) 2011 NovaPoint Group LLC (<http://www.novapointgroup.com>)
 #    Copyright (C) 2004-2010 OpenERP SA (<http://www.openerp.com>)
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -19,14 +20,9 @@
 #
 ##############################################################################
 from osv import osv, fields
-from pkg_resources import require
 
 class product_tax_code(osv.osv):
-    """ Define type of tax code: 
-    @param type: product is use as product code,
-    @param type: freight is use for shipping code
-    @param type: service is use for service type product  
-    """
+    """Define type of tax code"""
     _name = 'product.tax.code'
     _description = 'Tax Code'
     _columns = {
@@ -44,60 +40,11 @@ product_tax_code()
 
 class product_template(osv.osv):
     _inherit = "product.template"
-    
-    
-    def create(self, cr, uid, vals, context=None):
-        p_temp = self.pool.get('product.template')
-        p_id = super(product_template, self).create(cr, uid, vals, context)
-        p_brw = p_temp.browse(cr, uid, p_id)
-        if p_brw.categ_id and p_brw.categ_id.tax_code_id:
-            p_temp.write(cr, uid, [p_id], {'tax_apply': True, 'tax_code_id': p_brw.categ_id.tax_code_id.id})
-        else:
-            p_temp.write(cr, uid, [p_id], {'tax_apply': False, 'tax_code_id': False})
-        return p_id
-    
-    def write(self, cr, uid, ids, vals, context=None):
-        if 'categ_id' in vals:
-            p_brw = self.pool.get('product.category').browse(cr, uid, vals['categ_id'])
-            if p_brw.tax_code_id:
-                vals['tax_apply'] = True
-                vals['tax_code_id'] = p_brw.tax_code_id.id
-            else:
-                vals['tax_apply'] = False
-                vals['tax_code_id'] = False
-        return super(product_template, self).write(cr, uid, ids, vals, context)
-            
-    
     _columns = {
-        'tax_code_id': fields.many2one('product.tax.code', 'Tax Code', help="AvaTax Tax Code"),
-#        'tax_code_id': fields.related('categ_id', 'tax_code_id', type="many2one", relation="product.tax.code", string="Tax Code", store=True, help="AvaTax Tax Code"),
-        'tax_apply': fields.boolean('Tax Calculation',help="Use Following Tax code for this Product"),
+        'tax_code_id': fields.many2one('product.tax.code', 'Tax Code', help="AvaTax Tax Code")
     }
 
 product_template()
-
-class product_product(osv.osv):
-    _inherit = 'product.product'
-    _columns = {
-            'default_code' : fields.char('Product Code', size=64, select=True, required=True),
-        }
-    _sql_constraints = [
-        ('name_uniq', 'unique(default_code)', 'Product Reference Code must be unique per Company!'),
-    ]
-    
-    def onchange_categ(self, cr, uid, ids, categ_id, context=None):
-        res = {
-               'tax_apply': False,
-               'tax_code_id': False
-               }
-        if categ_id:
-            p_brw = self.pool.get('product.category').browse(cr, uid, categ_id)
-            if p_brw.tax_code_id:
-                res['tax_apply'] = True
-                res['tax_code_id'] = p_brw.tax_code_id.id
-        return {'value': res} 
-    
-product_product()
 
 class product_category(osv.osv):
     _inherit = "product.category"

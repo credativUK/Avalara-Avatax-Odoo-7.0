@@ -27,7 +27,7 @@ class AvaTaxService:
         self.url = url
         self.timeout = timeout
         enable_log and self.enable_log()
-        
+
     def create_tax_service(self):
         self.taxSvc = self.service('tax')
         return self
@@ -35,11 +35,6 @@ class AvaTaxService:
     def create_address_service(self):
         self.addressSvc = self.service('address')
         return self
-    
-    def create_account_service(self):
-        self.accountSvc = self.service('account')
-        return self
-    
 
     def service(self, name):
         nameCap = string.capitalize(name) # So this will be 'Tax' or 'Address'
@@ -50,9 +45,9 @@ class AvaTaxService:
         wsdl_url = 'https://avatax.avalara.net/%s/%ssvc.wsdl' % (nameCap, nameCap)
         
         try:
-             svc = suds.client.Client(url=wsdl_url)
+             svc = suds.client.Client(url=wsdl_url)  
         except urllib2.URLError, details:
-            raise osv.except_osv(_('Avatax: Server Failed to Response'), _(details))
+            raise osv.except_osv(_('Server Failed to Response'), _(details))
         else:
             svc.set_options(service='%sSvc' % nameCap)
             svc.set_options(port='%sSvcSoap' % nameCap)
@@ -63,11 +58,19 @@ class AvaTaxService:
             return svc
 
     def my_security(self, username, password):
-        """Using username and password as key to verify user account to access avalara API's"""
         token = suds.wsse.UsernameToken(username, password)
 
+        # AvaTax leaves the WSSE Nonce and Created elements as
+        # optional. As explained in XXX, you should include these if at
+        # all possible, to make your connection more secure.
+        # Nonce (optional) is a randomly generated, cryptographic token
+        # used to prevent theft and replay attacks. We recommend sending
+        # it if your SOAP client library supports it.
         token.setnonce()
 
+        # Created (optional) identifies when the message was created and
+        # prevents replay attacks. We recommend sending it if your SOAP
+        # client library supports it.
         token.setcreated()
         security = suds.wsse.Security()
         security.tokens.append(token)
@@ -76,10 +79,10 @@ class AvaTaxService:
     def my_profile(self):
 
         # Set elements adapter defaults
-        ADAPTER = 'Pragmatic'
+        ADAPTER = 'Novapoint Group,0.1'
 
         # Profile Client.
-        CLIENT = 'Pragmatic'
+        CLIENT = 'Novapoint Group,0.1'
 
         #Build the Profile element
         profileNameSpace = ('ns1', 'http://avatax.avalara.com/services')
@@ -94,31 +97,50 @@ class AvaTaxService:
         try:
             result = operation(request)
         except suds.WebFault, e:
-            raise osv.except_osv(_('Avatax: Error'), _(e.fault.faultstring))
+            raise osv.except_osv(_('Error'), _(e.fault.faultstring))
         except urllib2.HTTPError, e:
-            raise osv.except_osv(_('Avatax: Server Failed to Response'), _(e.code))
+            raise osv.except_osv(_('Server Failed to Response'), _(e.code))
         except urllib2.URLError, details:
             # We could also print the SOAP request here:
+            # print svc.last_sent()
             raise osv.except_osv(_('Failed to reach the server'), _(details.reason))
         else:
             if (result.ResultCode != 'Success'):
-                #for w_message in result.Messages.Message:
-                w_message = result.Messages.Message[0]
-                if (w_message._Name == 'AddressRangeError' or  w_message._Name == 'AddressUnknownStreetError' or w_message._Name == 'AddressNotGeocodedError' or w_message._Name == 'NonDeliverableAddressError' ):
-                     raise osv.except_osv(_('Avatax: Warning \n Avatax could not validate the street address.'), _('You can save the address and Avatax will make an attempt to compute taxes based on the zip code if "Attempt automatic address validation" is enabled in the Avatax connector configuration.'))
-                raise osv.except_osv(('Avatax: Error'), _(AvaTaxError(result.ResultCode, result.Messages)))
+                raise osv.except_osv(('Error'), _(AvaTaxError(result.ResultCode, result.Messages)))
             else:
                 return result
-            
 
     def ping(self):
         return self.get_result(self.taxSvc, self.taxSvc.service.Ping, '')
 
     def is_authorized(self):
         return self.get_result(self.taxSvc, self.taxSvc.service.IsAuthorized, 'GetTax,PostTax')
-    
+
     def validate_address(self, baseaddress, textcase='Default'):
+        # The Validate() operation needs a complex parameter, a
+        # ValidateRequest. SUDS gives us a factory method on the service
+        # object that creates a proxy class we can use.
         request = self.addressSvc.factory.create('ValidateRequest')
+        # SUDS allows us to get defaults set up for us automatically. But
+        # to keep this sample code simple, we won't do that here.
+        # These are the elements required by the WSDL, with the defaults
+        # set by the .NET adapter.
+        # See the PHP sample code or .NET SDK Help File for what each of these is for.
+        # TextCase, as with many other elements, is defined in the WSDL as
+        # an enumeration. Depending on your SOAP client library, language
+        # and platform, you may have these available to you. If you can
+        # use enumerations rather than strings you should do so, because
+        # it offers compile-time checking that can save your development
+        # time. We're just using strings elsewhere in this sample code, to
+        # keep things simple. But for TextCase we'll use SUDS
+        # enumerations, just to show you how this sort of thing would
+        # work.
+        # This is the SUDS documentation on enumerations:
+        # https://fedorahosted.org/suds/wiki/Documentation#ENUMERATIONS
+        # So this is how we'll do things if we're just using strings
+        #
+        # request.TextCase = 'Default'
+        #
         textCase = self.addressSvc.factory.create('TextCase')
         request.TextCase = textcase
         request.Coordinates = True
@@ -130,26 +152,18 @@ class AvaTaxService:
         return result
 
     def get_tax(self, company_code, doc_date, doc_type, partner_code, doc_code, origin, destination,
-               received_lines, exemption_no=None, customer_usage_type=None, salesman_code=None, commit=False, invoice_date=None, reference_code=None, 
-               location_code=None, currency_code='USD', vat_id=None):
-        """ Create tax request and get tax amount by customer address
-            @currency_code : 'USD' is the default currency code for avalara, if user not specify in the own company
-            @request.DetailLevel = 'Document': Document (GetTaxResult) level details; TaxLines will not be returned.
-            @request.DetailLevel = 'Diagnostic': In addition to Tax level details, indicates that the server should 
-            return information about how the tax was calculated. Intended for use only while the SDK is in a development environment.
-        """
+               received_lines, exemption_no=None, customer_usage_type=None, salesman_code=None, commit=False, invoice_date=None, reference_code=None):
         lineslist = []
         request = self.taxSvc.factory.create('GetTaxRequest')
+        # We'll first default everything just as the .NET adapter does
         request.Commit = commit
         request.DetailLevel = 'Diagnostic'
-#        request.DetailLevel = 'Document'
         request.Discount = 0.0
-        request.ServiceMode = 'Automatic'   ##service mode = Automatic/Local/Remote
-        request.PaymentDate = doc_date
+        request.ServiceMode = 'Automatic' # PHP defaults this to Automatic; Java likewise
+        request.PaymentDate = '1900-01-01'
         request.ExchangeRate = 45
         request.ExchangeRateEffDate = '2011-07-07'
         request.HashCode = 0
-        request.LocationCode = location_code
         request.ReferenceCode = reference_code
         if invoice_date:
             taxoverride = self.taxSvc.factory.create('TaxOverride')
@@ -158,7 +172,13 @@ class AvaTaxService:
             taxoverride.TaxAmount = 0
             taxoverride.Reason = 'Return Items'
             request.TaxOverride = taxoverride
-       
+        # We'll now set the properties as we would normally, including
+        # some that have already been defaulted.
+        # The GetTax call will exactly match that in the PHP sample
+        # code. So you can compare the XML from them line-by-line. We
+        # suggest you try to get the same call set up in whatever language
+        # and platform you're using, so you can compare your XML likewise.
+        # See the PHP sample code for an explanation of each of these.
         request.CompanyCode = company_code
         request.DocDate = doc_date
         request.DocType = doc_type
@@ -167,9 +187,21 @@ class AvaTaxService:
         request.ExemptionNo = exemption_no
         request.CustomerUsageType = customer_usage_type
         request.SalespersonCode = salesman_code
-        request.CurrencyCode = currency_code
-        request.BusinessIdentificationNo = vat_id
-        
+        # Now the AddressCode, which we'll reference later. Note that
+        # although it's a string and so you could use 'Origin' and
+        # 'Destination' here, because addresses could be defined at the
+        # line level you're best off just numbering them.
+        #
+        # Furthermore, any Messages you get back in an error from the
+        # service will, in Message.RefersTo, reference the addresses
+        # indexed as they appear in Addresses, starting at zero, so if you
+        # use AddressCode = '0', '1' and so on, the index in the Message
+        # will match the appropriate item.
+        # Be very careful to make the addresscodes all match up. If, for
+        # example, origin.AddressCode does not match an entry in
+        # Addresses, the origin address will be treated as if it were
+        # blank.
+        # Now we'll set some of the other properties as usual
         addresses = self.taxSvc.factory.create('ArrayOfBaseAddress')
         addresses.BaseAddress = [origin, destination]
         request.Addresses = addresses
@@ -192,17 +224,6 @@ class AvaTaxService:
         # And we're ready to make the call
         result = self.get_result(self.taxSvc, self.taxSvc.service.GetTax, request)
         return result
-    
-    def get_tax_history(self, company_code, doc_code, doc_type):
-        request = self.taxSvc.factory.create('GetTaxHistoryRequest')
-        request.DetailLevel = 'Document'
-        request.CompanyCode = company_code
-        request.DocCode = doc_code
-        request.DocType = doc_type
-#        request.CancelCode = cancel_code
-        result = self.get_result(self.taxSvc, self.taxSvc.service.GetTaxHistory, request)
-        return result
-        
 
     def cancel_tax(self, company_code, doc_code, doc_type, cancel_code):
         request = self.taxSvc.factory.create('CancelTaxRequest')

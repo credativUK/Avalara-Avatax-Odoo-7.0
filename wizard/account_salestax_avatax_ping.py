@@ -2,6 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
+#    Copyright (C) 2011 NovaPoint Group LLC (<http://www.novapointgroup.com>)
 #    Copyright (C) 2004-2010 OpenERP SA (<http://www.openerp.com>)
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -22,14 +23,14 @@
 from osv import osv, fields
 from tools.translate import _
 
-from avalara_salestax.avalara_api import AvaTaxService
+from account_salestax_avatax.suds_client import AvaTaxService
 
-class avalara_salestax_ping(osv.osv_memory):
-    _name = 'avalara.salestax.ping'
+class account_salestax_avatax_ping(osv.osv_memory):
+    _name = 'account.salestax.avatax.ping'
     _description = 'Ping Service'
     
     def default_get(self, cr, uid, fields_list=None, context=None):
-        res = super(avalara_salestax_ping, self).default_get(cr, uid, fields_list, context)
+        res = super(account_salestax_avatax_ping, self).default_get(cr, uid, fields_list, context)
         self.ping(cr, uid, context=context)
         return res
     
@@ -44,7 +45,7 @@ class avalara_salestax_ping(osv.osv_memory):
             context = {}
 
         if context.get('active_id', False):
-            avatax_pool = self.pool.get('avalara.salestax')
+            avatax_pool = self.pool.get('account.salestax.avatax')
             avatax_config = avatax_pool.browse(cr, uid, context['active_id'], context=context)
             avapoint = AvaTaxService(avatax_config.account_number, avatax_config.license_key,
                                       avatax_config.service_url, avatax_config.request_timeout, avatax_config.logging)
@@ -53,8 +54,8 @@ class avalara_salestax_ping(osv.osv_memory):
             result = avapoint.is_authorized()
             avatax_pool.write(cr, uid, avatax_config.id, {'date_expiration': result.Expires})
         return True
-    
+#        return {'type': 'ir.actions.act_window_close'}
 
-avalara_salestax_ping()
+account_salestax_avatax_ping()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

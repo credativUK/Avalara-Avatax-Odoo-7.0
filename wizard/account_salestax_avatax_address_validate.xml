@@ -4,9 +4,9 @@
 
         <!-- Partner Address Validate -->
 
-         <record id="view_avalara_salestax_address_validate" model="ir.ui.view">
+         <record id="view_account_salestax_avatax_address_validate" model="ir.ui.view">
             <field name="name">Address Validatation</field>
-            <field name="model">avalara.salestax.address.validate</field>
+            <field name="model">account.salestax.avatax.address.validate</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Address Validation" version="7.0">
@@ -40,13 +40,13 @@
             </field>
         </record>
 
-        <record id="action_avalara_salestax_address_validate" model="ir.actions.act_window">
+        <record id="action_account_salestax_avatax_address_validate" model="ir.actions.act_window">
              <field name="name">Address Validation</field>
              <field name="type">ir.actions.act_window</field>
-             <field name="res_model">avalara.salestax.address.validate</field>
+             <field name="res_model">account.salestax.avatax.address.validate</field>
              <field name="view_type">form</field>
              <field name="view_mode">form</field>
-             <field name="view_id" ref="view_avalara_salestax_address_validate"/>
+             <field name="view_id" ref="view_account_salestax_avatax_address_validate"/>
              <field name="target">new</field>
         </record>
 

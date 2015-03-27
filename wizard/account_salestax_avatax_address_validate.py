@@ -2,6 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
+#    Copyright (C) 2011 NovaPoint Group LLC (<http://www.novapointgroup.com>)
 #    Copyright (C) 2004-2010 OpenERP SA (<http://www.openerp.com>)
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -23,9 +24,9 @@ import time
 from osv import osv, fields
 from tools.translate import _
 
-class avalara_salestax_address_validate(osv.osv_memory):
+class account_salestax_avatax_address_validate(osv.osv_memory):
     """Address Validation using Avalara API"""
-    _name = 'avalara.salestax.address.validate'
+    _name = 'account.salestax.avatax.address.validate'
     _description = 'Address Validation using AvaTax'
     _columns = {
         'original_street': fields.char('Street', size=64, readonly=True),
@@ -47,7 +48,7 @@ class avalara_salestax_address_validate(osv.osv_memory):
     def view_init(self, cr, uid, fields, context=None):
         """ Checks for precondition before wizard executes. """
         address_obj = self.pool.get('res.partner')
-        avatax_config_obj= self.pool.get('avalara.salestax')
+        avatax_config_obj= self.pool.get('account.salestax.avatax')
 
         if context is None:
             context = {}
@@ -58,32 +59,27 @@ class avalara_salestax_address_validate(osv.osv_memory):
         if context.get('active_id', False) and context.get('active_model', False) == 'res.partner':
             avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, context=context)
             if not avatax_config:
-                raise osv.except_osv(_('Avatax: Service Not Setup'), _("The AvaTax Tax Service is not active."))
+                raise osv.except_osv(_('Service Not Setup'), _("The AvaTax Tax Service is not active. To sign-up for the AvaTax Tax Service please visit www.novapointgroup.com."))
             address = address_obj.browse(cr, uid, context['active_id'], context=context)
-            if avatax_config.validation_on_save:
-                raise osv.except_osv(_('Avatax: Address Already Validated'), _("Address Validation on Save is already active in the AvaTax Configuration."))
+            if address.validated_on_save and avatax_config.validation_on_save:
+                raise osv.except_osv(_('Address Already Validated'), _("Address Validation on Save is already active in the AvaTax Configuration."))
             address_obj.check_avatax_support(cr, uid, avatax_config, address.country_id and address.country_id.id or False, context=context)
         return True
 
     def default_get(self, cr, uid, fields, context=None):
         """  Returns the default values for the fields. """
-        res = super(avalara_salestax_address_validate, self).default_get(cr, uid, fields, context)
 
-        if context.get('active_id', False):
+        res = super(account_salestax_avatax_address_validate, self).default_get(cr, uid, fields, context)
+
+        if context.get('active_id', False) and context.get('active_model', False) == 'res.partner':
             address_obj = self.pool.get('res.partner')
-            address_obj.write(cr, uid, [context['active_id']], {
-                                                        'latitude': '',
-                                                        'longitude': '',
-                                                        'date_validation': False,
-                                                        'validation_method': '',
-                                                        })
-            cr.commit()     #Need to forcefully commit data when address not validate after changes in validate address
-            
             address = address_obj.read(cr, uid, context['active_id'], ['street', 'street2', 'city', 'state_id', 'zip', 'country_id'], context=context)
             address['state_id'] = address.get('state_id') and address['state_id'][0]
             address['country_id'] = address.get('country_id') and address['country_id'][0]
+
             # Get the valid result from the AvaTax Address Validation Service
             valid_address = address_obj._validate_address(cr, uid, address, context=context)
+
             if 'original_street' in fields:
                 res.update({'original_street': address['street']})
             if 'original_street2' in fields:
@@ -124,18 +120,17 @@ class avalara_salestax_address_validate(osv.osv_memory):
                 'street': valid_address['street'],
                 'street2': valid_address['street2'],
                 'city': valid_address['city'],
-                'state_id': address_obj.get_state_id(cr, uid, valid_address['state'], valid_address['country'], context=context),
+                'state_id': address_obj.get_state_id(cr, uid, valid_address['state'], context=context),
                 'zip': valid_address['zip'],
                 'country_id': address_obj.get_country_id(cr, uid, valid_address['country'], context=context),
-                'latitude': valid_address['latitude'] or 'unavailable',
-                'longitude': valid_address['longitude'] or 'unavailable',
+                'latitude': valid_address['latitude'],
+                'longitude': valid_address['longitude'],
                 'date_validation': time.strftime('%Y-%m-%d'),
                 'validation_method': 'avatax'
             }
             address_obj.write(cr, uid, [context['active_id']], address_result, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
-avalara_salestax_address_validate()
-
+account_salestax_avatax_address_validate()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

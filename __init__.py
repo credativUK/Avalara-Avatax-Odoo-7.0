@@ -2,6 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
+#    Copyright (C) 2011 NovaPoint Group LLC (<http://www.novapointgroup.com>)
 #    Copyright (C) 2004-2010 OpenERP SA (<http://www.openerp.com>)
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -20,12 +21,12 @@
 ##############################################################################
 
 import product
-import avalara_salestax
+import account_salestax_avatax
 import partner
-import avalara_api
-import sale_order
-import account_invoice
-import account_tax
+import suds_client
+import sale
+import invoice
+import account
 import wizard
 
 

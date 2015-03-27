@@ -2,6 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
+#    Copyright (C) 2011 NovaPoint Group LLC (<http://www.novapointgroup.com>)
 #    Copyright (C) 2004-2010 OpenERP SA (<http://www.openerp.com>)
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -20,64 +21,52 @@
 ##############################################################################
 
 {
-    "name" : "OpenERP Avalara connector for Sales tax calculation",
-    "version" : "1.0.1",
-    "author" : 'Kranbery Technologies / Pragmatic',
-    'summary': 'Quotations, Sales Orders, Invoicing',
-    "description": """ 
-This module helps to calculate sale tax from Avalara while creating Sale Orders or Customer Invoices. 
-Sale tax calculated is based on customer address which needs to be get validated from Avalara before 
-calculating sale tax for particular customer order or invoice.
- 
-This module has Following Features:
+    "name" : "Use AvaTax web service to calculate tax",
+    "version" : "1.0",
+    "author" : 'Pragmatic Team',
+    "description": """ This module supports calculating sales and use taxes, validates addresses
+using the AvaTax subscription service from AVALARA. www.avalara.com. It is targeted for the US, Canadian, and in the future the international markets
+supported by AVALARA. Users of the module need to subscribe to a service plan from AVALARA and obtain the proper login credentials prior
+to using this module. As the US and Canadian tax programs have more
+than 22,000 unique tax jurisdictions based on a GEO-Location matrix segmented by product category,
+and tax collection legislation continues to change in the US to include new
+areas like internet transactions, we believe using a tax service from AvaTax to calculate applicable taxes due simplifies
+a company's management, time and effort to be in compliance with tax rules.
 
-1. Customer and Company Address Validation.
-2. In Line or Total Order amount sale tax calculation. 
-3. Handling of Customer Refunds.
-4. Customer Exemption handling. 
-5. Calculation of Shipping Cost tax. 
-6. Use both Avalara and OpenERP Taxes etc.
-                     
-Some important points. 
+It is intended that the tax calculation service is called whenever an existing tax calculation is calculated within OpenERP.
 
-1. Prior Using this module make sure you have Avalara admin console login for configuring your avalara settings https://www.avalara.com.
+The process to setup the system is as follows:
+A company would initially install the module.
+A company would sign-up for the AVATAX service.
+A company enter their AVATAX credentials in OpenERP.
+A company then should setup their Chart of Accounts with the appropriate accounts to capture detailed tax information (see your accountant).
+A company then sets up the AVATAX service to cater to the products and services they provide.
+A company then configures OpenERP properly for tax processing with AVATAX.
+A company then tests the AVATAX connection and service.
 
-2. Once module is installed configure your Avalara setting in OpenERP under "Accounting/Configuration/Avatax".
+AVATAX also offers a service to manage the submission of taxes due to various tax jurisdictions electronically, and manually.
 
-3. Default Tax will be created make sure you configure it correctly under "Accounting/Configuration/Tax"
+Please review the module documentation prior to installing the module for prerequisites.
 
-4. Configure Company Address and Validate it from Avalara. (Use customer link for finding res.partner for company and validate it from partner record use Sales/Sales/Customers and remove Customer filter on this tree view) 
+NOTE: Use of this module is "at your own risk", and does not in any way make NovaPoint Group or OpenERP liable for any issues or construe any
+obligation that calculations are correct, or that tax calculations are sufficient to meet regulatory or legislative requirements.
 
-5. Make sure you validate customer address.
-
-Improvement for version 1.0.1
-
-Following improvements are made after first review:
-
-1. Country wise state code validation on address form.
-
-2. Updated rights for users.
-
-3. Resolve invoice creation issues from delivery order.
-     
-Note: Make sure you have proper internet connection.
 """,
     "category" : "Generic Modules/Accounting",
     "website" : "http://www.pragtech.co.in/",
-    "depends" : [ 'base','sale','account','account_accountant', 'stock'],
+    "depends" : ["sale_negotiated_shipping", 'account', 'account_accountant'],
     "init_xml" : [],
     "demo_xml" : [],
     "update_xml" : [
-    "wizard/avalara_salestax_ping_view.xml",
-    "wizard/avalara_salestax_address_validate_view.xml",
-    "avalara_salestax_view.xml",
-    "avalara_salestax_data.xml",
+    "account_salestax_avatax_data.xml",
+    "wizard/account_salestax_avatax_ping.xml",
+    "wizard/account_salestax_avatax_address_validate.xml",
+    "account_salestax_avatax_view.xml",
     "partner_view.xml",
     "product_view.xml",
     "account_invoice_workflow.xml",
     "account_invoice_view.xml",
-    "sale_order_view.xml",
-    "security/avalara_salestax_security.xml",
+    "security/account_salestax_avatax_security.xml",
     "security/ir.model.access.csv",
     ],
     "test" : [],
