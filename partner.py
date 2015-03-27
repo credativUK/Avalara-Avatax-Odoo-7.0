@@ -25,8 +25,6 @@ from tools.translate import _
 import decimal_precision as dp
 
 from avalara_api import AvaTaxService, BaseAddress
-from compiler.ast import TryFinally
-
 
 class res_partner(osv.osv):
     """Update partner information by adding new fields according to avalara partner configuration"""
@@ -54,9 +52,9 @@ class res_partner(osv.osv):
         """ Checks if address validation pre-condition meets. """
 
         if avatax_config.address_validation:
-            raise osv.except_osv(_('Address Validation is Disabled'), _("The AvaTax Address Validation Service is disabled by the administrator. Please make sure it's enabled for the address validation"))
+            raise osv.except_osv(_('Avatax: Address Validation is Disabled'), _("The AvaTax Address Validation Service is disabled by the administrator. Please make sure it's enabled for the address validation"))
         if country_id and country_id not in [x.id for x in avatax_config.country_ids]:
-            raise osv.except_osv(_('Address Validation not Supported for this country'), _("The AvaTax Address Validation Service does not support this country in the configuration, please continue with your normal process."))
+            raise osv.except_osv(_('Avatax: Address Validation not Supported for this country'), _("The AvaTax Address Validation Service does not support this country in the configuration, please continue with your normal process."))
         return True
     
     
@@ -66,11 +64,11 @@ class res_partner(osv.osv):
         else:
             return {}
 
-    def get_state_id(self, cr, uid, code, c_code, context=None):
+    def get_state_id(self, cr, uid, code, context=None):
         """ Returns the id of the state from the code. """
+
         state_obj = self.pool.get('res.country.state')
-        c_id = self.pool.get('res.country').search(cr, uid, [('code', '=', c_code)], context=context)[0]
-        s_id = state_obj.search(cr, uid, [('code', '=', code),('country_id', '=',c_id)], context=context)
+        s_id = state_obj.search(cr, uid, [('code', '=', code)], context=context)
         if s_id: return s_id[0]
         return False
 
@@ -91,54 +89,10 @@ class res_partner(osv.osv):
 
         country_obj = self.pool.get('res.country')
         return country_id and country_obj.browse(cr, uid, country_id, context=context).code
-    
-    def multi_address_validation(self, cr, uid, ids, context=None):
-        add_val_ids = []
-        address_obj = self.pool.get('res.partner')
-        if context:
-            add_val_ids = context.get('active_ids')
-        for val_id in add_val_ids:
-            vals = address_obj.read(cr, uid, val_id, ['street', 'street2', 'city', 'state_id', 'zip', 'country_id'], context=context)
-            vals['state_id'] = vals.get('state_id') and vals['state_id'][0]
-            vals['country_id'] = vals.get('country_id') and vals['country_id'][0]
-            
-            avatax_config_obj= self.pool.get('avalara.salestax')
-            avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, context=context)
-
-            if avatax_config:
-                try:
-                    valid_address = self._validate_address(cr, uid, vals, avatax_config, context=context)
-                    vals.update({
-                        'street': valid_address.Line1,
-                        'street2': valid_address.Line2,
-                        'city': valid_address.City,
-                        'state_id': self.get_state_id(cr, uid, valid_address.Region, valid_address.Country, context=context),
-                        'zip': valid_address.PostalCode,
-                        'country_id': self.get_country_id(cr, uid, valid_address.Country, context=context),
-                        'latitude': valid_address.Latitude,
-                        'longitude': valid_address.Longitude,
-                        'date_validation': time.strftime('%Y-%m-%d'),
-                        'validation_method': 'avatax',
-                        'validated_on_save': True
-                    })
-                    self.write(cr, uid, [val_id], vals, context=context)
-                    cr.commit()
-                except:
-                    pass
-        mod_obj = self.pool.get('ir.model.data')
-        res = mod_obj.get_object_reference(cr, uid, 'base', 'view_partner_tree')
-        res_id = res and res[1] or False,
-
-        return {
-            'view_type': 'list',
-            'view_mode': 'list,form',
-            'res_model': 'res.partner',
-            'type':'ir.actions.act_window',
-            'context': {'search_default_customer':1},
-        }
 
     def _validate_address(self, cr, uid, address, avatax_config=False, context=None):
         """ Returns the valid address from the AvaTax Address Validation Service. """
+
         avatax_config_obj= self.pool.get('avalara.salestax')
         if context is None:
             context = {}
@@ -163,10 +117,11 @@ class res_partner(osv.osv):
     def update_address(self, cr, uid, ids, vals, from_write=False, context=None):
         """ Updates the vals dictionary with the valid address as returned from the Avalara Address Validation. """
         address = vals        
-        if vals and ids:
+        if vals:
             if (vals.get('street') or vals.get('street2') or vals.get('zip') or vals.get('city') or \
                 vals.get('country_id') or vals.get('state_id')):
     
+    #            address_obj = self.pool.get('res.partner.address')
                 address_obj = self.pool.get('res.partner')
                 avatax_config_obj= self.pool.get('avalara.salestax')
                 avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, context=context)
@@ -175,16 +130,18 @@ class res_partner(osv.osv):
                     self.check_avatax_support(cr, uid, avatax_config, address.get('country_id'), context=context)
     
                     if from_write:
-                        address = address_obj.read(cr, uid, ids[0], ['street', 'street2', 'city', 'state_id', 'zip', 'country_id'], context=context)
+                        fields_to_read = filter(lambda x: x not in vals, ['street', 'street2', 'city', 'state_id', 'zip', 'country_id'])
+                        address = fields_to_read and address_obj.read(cr, uid, ids, fields_to_read, context=context) or {}
                         address['state_id'] = address.get('state_id') and address['state_id'][0]
                         address['country_id'] = address.get('country_id') and address['country_id'][0]
-                    
+                        address.update(vals)
+    
                     valid_address = self._validate_address(cr, uid, address, avatax_config, context=context)
                     vals.update({
                         'street': valid_address.Line1,
                         'street2': valid_address.Line2,
                         'city': valid_address.City,
-                        'state_id': self.get_state_id(cr, uid, valid_address.Region, valid_address.Country, context=context),
+                        'state_id': self.get_state_id(cr, uid, valid_address.Region, context=context),
                         'zip': valid_address.PostalCode,
                         'country_id': self.get_country_id(cr, uid, valid_address.Country, context=context),
                         'latitude': valid_address.Latitude,
@@ -229,7 +186,7 @@ class res_partner(osv.osv):
                         'street': valid_address.Line1,
                         'street2': valid_address.Line2,
                         'city': valid_address.City,
-                        'state_id': self.get_state_id(cr, uid, valid_address.Region, valid_address.Country, context=context),
+                        'state_id': self.get_state_id(cr, uid, valid_address.Region, context=context),
                         'zip': valid_address.PostalCode,
                         'country_id': self.get_country_id(cr, uid, valid_address.Country, context=context),
                         'latitude': valid_address.Latitude,
@@ -247,12 +204,12 @@ class res_partner(osv.osv):
         #when tax exempt check then atleast exemption number or exemption code should be filled            
         if vals.get('tax_exempt'):
             if not vals.get('exemption_number') and not vals.get('exemption_code_id'):
-                raise osv.except_osv("Warning !", "Please enter either Exemption Number or Exemption Code for marking customer as Exempt.")
+                raise osv.except_osv("Avatax: Warning !", "Please enter either Exemption Number or Exemption Code for marking customer as Exempt.")
         # Follow the normal write process if it's a write operation from the wizard
         if context.get('from_validate_button', False):
             return super(res_partner, self).write(cr, uid, ids, vals, context)
-#        if context.get('active_id', False):
-        vals = self.update_address(cr, uid, ids, vals, True, context=context)
+        if context.get('active_id', False):
+            vals = self.update_address(cr, uid, ids, vals, True, context=context)
         return super(res_partner, self).write(cr, uid, ids, vals, context)
     
 
