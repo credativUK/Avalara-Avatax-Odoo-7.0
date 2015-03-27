@@ -42,26 +42,26 @@ class account_tax(osv.osv):
         address_obj = self.pool.get('res.partner')
         currency_code = self._get_currency(cr, uid, context)
         if not partner.customer_code:
-            raise osv.except_osv(_('Avatax: Warning !'), _('Customer Code for customer %s not define'% (partner.name)))
+            raise osv.except_osv(_('AvaTax: Warning !'), _('Customer Code for customer %s not defined.\n\n  You can edit the Customer Code in customer profile.'% (partner.name)))
         
         if not shipping_address_id:
-            raise osv.except_osv(_('Avatax: No Shipping Address Defined !'), _('There is no shipping address defined for the partner.'))        
+            raise osv.except_osv(_('AvaTax: No Shipping Address Defined !'), _('There is no shipping address defined for the partner.'))        
         #it's show destination address
         shipping_address = address_obj.browse(cr, uid, shipping_address_id, context=context)
         if not lines:
-            raise osv.except_osv(_('Avatax: Error !'), _('AvaTax needs atleast one sale order line defined for tax calculation.'))
+            raise osv.except_osv(_('AvaTax: Error !'), _('AvaTax needs atleast one sale order line defined for tax calculation.'))
         
-        #this condition is required, in case user select force address validation on Avatax API Configuration
+        #this condition is required, in case user select force address validation on AvaTax API Configuration
         #if (not avatax_config.force_address_validation) and (
         if not avatax_config.address_validation:
             
             if not shipping_address.date_validation:
-                raise osv.except_osv(_('Avatax: Address Not Validated !'), _('Please validate the shipping address for the partner %s.'
+                raise osv.except_osv(_('AvaTax: Address Not Validated !'), _('Please validate the shipping address for the partner %s.'
                             % (partner.name)))
 
 
         if not ship_from_address_id:
-            raise osv.except_osv(_('Avatax: No Ship from Address Defined !'), _('There is no company address defined.'))
+            raise osv.except_osv(_('AvaTax: No Ship from Address Defined !'), _('There is no company address defined.'))
 
         #it's show source address
         ship_from_address = address_obj.browse(cr, uid, ship_from_address_id, context=context)
@@ -69,7 +69,7 @@ class account_tax(osv.osv):
         
         if not avatax_config.address_validation:
             if not ship_from_address.date_validation:
-                raise osv.except_osv(_('Avatax: Address Not Validated !'), _('Please validate the company address.'))
+                raise osv.except_osv(_('AvaTax: Address Not Validated !'), _('Please validate the company address.'))
 
         #For check credential
         avalara_obj = AvaTaxService(avatax_config.account_number, avatax_config.license_key,

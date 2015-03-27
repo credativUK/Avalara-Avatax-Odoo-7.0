@@ -24,7 +24,7 @@ from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
 import time
-
+from random import random
 
 from avalara_api import AvaTaxService, BaseAddress
 from compiler.ast import TryFinally
@@ -36,14 +36,14 @@ class res_partner(osv.osv):
     _columns = {
         'exemption_number': fields.char('Exemption Number', size=64, help="Indicates if the customer is exempt or not"),
         'exemption_code_id': fields.many2one('exemption.code', 'Exemption Code', help="Indicates the type of exemption the customer may have"),
-        'tax_schedule_id': fields.many2one('tax.schedule', 'Tax Schedule', help="Identifies customers using AVATAX. Only customers with AVATAX designation triggers tax calculation from Avatax otherwise it will follow the normal tax calculation that OpenERP provides"),
+        'tax_schedule_id': fields.many2one('tax.schedule', 'Tax Schedule', help="Identifies customers using AVATAX. Only customers with AVATAX designation triggers tax calculation from AvaTax otherwise it will follow the normal tax calculation that OpenERP provides"),
         
         'date_validation': fields.date('Last Validation Date', readonly=True, help="The date the address was last validated by AvaTax and accepted"),
         'validation_method': fields.selection([('avatax', 'AVALARA'), ('usps', 'USPS'), ('other', 'Other')], 'Address Validation Method', readonly=True, help="It gets populated when the address is validated by the method"),
         'latitude': fields.char('Latitude', size=32),
         'longitude': fields.char('Longitude', size=32),
         'validated_on_save': fields.boolean('Validated On Save', help="Indicates if the address is already validated on save before calling the wizard"),
-        'customer_code': fields.char('Customer Code', size=40),
+        'customer_code': fields.char('Customer Code', size=40, required=True),
         'tax_apply': fields.boolean('Tax Calculation',help="Indicates the avatax calculation is compulsory"),
         'tax_exempt': fields.boolean('Is Tax Exempt',help="Indicates the exemption tax calculation is compulsory"),
         'vat_id': fields.char("VAT ID", help="Customers VAT number (Buyer VAT). Identifies the customer as a “Registered Business” and the tax engine will utilize that information in the tax decision process."),
@@ -52,14 +52,23 @@ class res_partner(osv.osv):
         ('name_uniq', 'unique(customer_code)', 'Customer Code must be unique!'),
     ]
     
+    
+    
+    def generate_cust_code(self, cr, uid, ids, partner_id, context=None):
+        
+         #Auto populate customer code
+        customer_code = str(int(time.time()))+'-'+str(int(random()*10))+'-'+'Cust-'+str(ids[0])                
+        self.write(cr, uid, ids, {'customer_code': customer_code})
+        
+        
     def check_avatax_support(self, cr, uid, avatax_config, country_id, context=None):
         """ Checks if address validation pre-condition meets. """
 
         if avatax_config.address_validation:
-            raise osv.except_osv(_('Avatax: Address Validation is Disabled'), _("The AvaTax Address Validation Service is disabled by the administrator. Please make sure it's enabled for the address validation"))
+            raise osv.except_osv(_('AvaTax: Address Validation is Disabled'), _("The AvaTax Address Validation Service is disabled by the administrator. Please make sure it's enabled for the address validation"))
         if country_id and country_id not in [x.id for x in avatax_config.country_ids] or not country_id:
             return False
-#            raise osv.except_osv(_('Avatax: Address Validation not Supported for this country'), _("The AvaTax Address Validation Service does not support this country in the configuration, please continue with your normal process."))
+#            raise osv.except_osv(_('AvaTax: Address Validation not Supported for this country'), _("The AvaTax Address Validation Service does not support this country in the configuration, please continue with your normal process."))
         return True
     
     
@@ -245,7 +254,7 @@ class res_partner(osv.osv):
                 
                 if vals.get('tax_exempt'):
                     if not vals.get('exemption_number') and vals.get('exemption_code_id') == False :
-                        raise osv.except_osv("Avatax: Warning !", "Please enter either Exemption Number or Exemption Code for marking customer as Exempt.") 
+                        raise osv.except_osv("AvaTax: Warning !", "Please enter either Exemption Number or Exemption Code for marking customer as Exempt.") 
                 
                 
                 #It will work when user want to validate address at customer creation, check option in avalara api form
@@ -271,9 +280,23 @@ class res_partner(osv.osv):
                             'validation_method': 'avatax',
                             'validated_on_save': True
                         })
+                        
+
+         
+        
+        
+        #customer_code = str(int(time.time()))+'-'+str(int(random()*10))+'-'+'Cust-' 
+         
+        #vals['customer_code'] =  customer_code
+         
+        # execute the create                
         cust_id = super(res_partner, self).create(cr, uid, vals, context)
+
+        # Generate a detailed customer code based on timestamp, a random number, and it's  ID                
+        customer_code = str(int(time.time()))+'-'+str(int(random()*10))+'-'+'Cust-'+str(cust_id)
+               
         #Auto populate customer code
-        self.write(cr, uid, [cust_id], {'customer_code': str(int(time.time()))+'-Cust-'+str(cust_id)})
+        self.write(cr, uid, [cust_id], {'customer_code': customer_code})
         return cust_id
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -292,7 +315,7 @@ class res_partner(osv.osv):
         #when tax exempt check then atleast exemption number or exemption code should be filled            
         if vals.get('tax_exempt'):
             if not vals.get('exemption_number') and not vals.get('exemption_code_id'):
-                raise osv.except_osv("Avatax: Warning !", "Please enter either Exemption Number or Exemption Code for marking customer as Exempt.")
+                raise osv.except_osv("AvaTax: Warning !", "Please enter either Exemption Number or Exemption Code for marking customer as Exempt.")
         # Follow the normal write process if it's a write operation from the wizard
         if context.get('from_validate_button', False):
             return super(res_partner, self).write(cr, uid, ids, vals, context)

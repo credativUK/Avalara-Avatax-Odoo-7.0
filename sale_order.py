@@ -206,7 +206,7 @@ class sale_order(osv.osv):
             elif order.tax_add_default:
                 return order.partner_id.id
             else:
-                raise osv.except_osv(_('Avatax: Warning !'), _('Please select address for avalara tax'))
+                raise osv.except_osv(_('AvaTax: Warning !'), _('Please select address for avalara tax'))
     
     
 
@@ -214,7 +214,7 @@ class sale_order(osv.osv):
         'exemption_code': fields.char('Exemption Number', help="It show the customer exemption number", ),
         'is_add_validate': fields.boolean('Address validated',),
         'exemption_code_id': fields.many2one('exemption.code', 'Exemption Code', help="It show the customer exemption code",),
-        'shipping_lines': fields.one2many('shipping.order.line','sale_ship_id', 'Avatax Shipping Lines', readonly=True, states={'draft': [('readonly', False)], 'sent': [('readonly', False)]}),       
+        'shipping_lines': fields.one2many('shipping.order.line','sale_ship_id', 'AvaTax Shipping Lines', readonly=True, states={'draft': [('readonly', False)], 'sent': [('readonly', False)]}),       
         'amount_shipping': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Shipping Cost',
             store = {
                 'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
@@ -339,7 +339,7 @@ class sale_order(osv.osv):
                     for s_line in order.shipping_lines:
                        ship_order_line.write(cr, uid, [s_line.id], {'tax_amt': 0.0,}) 
                 else:
-                    raise osv.except_osv(_('Avatax: Warning !'), _('Please select system calls in API Configuration'))
+                    raise osv.except_osv(_('AvaTax: Warning !'), _('Please select system calls in API Configuration'))
             else:
                 for o_line in order.order_line:
                     order_line.write(cr, uid, [o_line.id], {'tax_amt': 0.0,})

@@ -20,9 +20,9 @@
 ##############################################################################
 
 {
-    "name" : "OpenERP Avalara connector for Sales tax calculation",
+    "name" : "OpenERP Avalara connector for sales tax calculation",
     "version" : "1.0.1",
-    "author" : 'Kranbery Technologies / Pragmatic',
+    "author" : 'Kranbery Technologies',
     'summary': 'Quotations, Sales Orders, Invoicing',
     "description": """ 
 This module helps to calculate sale tax from Avalara while creating Sale Orders or Customer Invoices. 
@@ -42,7 +42,7 @@ Some important points.
 
 1. Prior Using this module make sure you have Avalara admin console login for configuring your avalara settings https://www.avalara.com.
 
-2. Once module is installed configure your Avalara setting in OpenERP under "Accounting/Configuration/Avatax".
+2. Once module is installed configure your Avalara setting in OpenERP under "Accounting/Configuration/AvaTax".
 
 3. Default Tax will be created make sure you configure it correctly under "Accounting/Configuration/Tax"
 
@@ -63,8 +63,9 @@ Following improvements are made after first review:
 Note: Make sure you have proper internet connection.
 """,
     "category" : "Generic Modules/Accounting",
-    "website" : "http://www.pragtech.co.in/",
+    "website" : "http://www.kranbery.com/",
     "depends" : [ 'base','sale','account','account_accountant', 'stock'],
+    #"images" : [ 'images/screenshot.png'],
     "init_xml" : [],
     "demo_xml" : [],
     "update_xml" : [

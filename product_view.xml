@@ -63,7 +63,7 @@
                     <field name="categ_id" on_change="onchange_categ(categ_id)"/>
                 </field>
 		        <xpath expr="/form/sheet/notebook/page[@string='Accounting']" position="after">
-		          <page string="Avatax">
+		          <page string="AvaTax">
 		              <separator string="AvaTax Properties" colspan="4"/>
 			          <group colspan="2" col="2">
 			            <field name="tax_apply"/> <!--   readonly="1" -->

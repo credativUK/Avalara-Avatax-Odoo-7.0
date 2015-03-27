@@ -52,7 +52,7 @@ class AvaTaxService:
         try:
              svc = suds.client.Client(url=wsdl_url)
         except urllib2.URLError, details:
-            raise osv.except_osv(_('Avatax: Server Failed to Response'), _(details))
+            raise osv.except_osv(_('AvaTax: Server Failed to Response'), _(details))
         else:
             svc.set_options(service='%sSvc' % nameCap)
             svc.set_options(port='%sSvcSoap' % nameCap)
@@ -94,9 +94,9 @@ class AvaTaxService:
         try:
             result = operation(request)
         except suds.WebFault, e:
-            raise osv.except_osv(_('Avatax: Error'), _(e.fault.faultstring))
+            raise osv.except_osv(_('AvaTax: Error'), _(e.fault.faultstring))
         except urllib2.HTTPError, e:
-            raise osv.except_osv(_('Avatax: Server Failed to Response'), _(e.code))
+            raise osv.except_osv(_('AvaTax: Server Failed to Response'), _(e.code))
         except urllib2.URLError, details:
             # We could also print the SOAP request here:
             raise osv.except_osv(_('Failed to reach the server'), _(details.reason))
@@ -105,8 +105,8 @@ class AvaTaxService:
                 #for w_message in result.Messages.Message:
                 w_message = result.Messages.Message[0]
                 if (w_message._Name == 'AddressRangeError' or  w_message._Name == 'AddressUnknownStreetError' or w_message._Name == 'AddressNotGeocodedError' or w_message._Name == 'NonDeliverableAddressError' ):
-                     raise osv.except_osv(_('Avatax: Warning \n Avatax could not validate the street address.'), _('You can save the address and Avatax will make an attempt to compute taxes based on the zip code if "Attempt automatic address validation" is enabled in the Avatax connector configuration.'))
-                raise osv.except_osv(('Avatax: Error'), _(AvaTaxError(result.ResultCode, result.Messages)))
+                     raise osv.except_osv(_('AvaTax: Warning \n AvaTax could not validate the street address.'), _('You can save the address and AvaTax will make an attempt to compute taxes based on the zip code if "Attempt automatic address validation" is enabled in the Avatax connector configuration.'))
+                raise osv.except_osv(('AvaTax: Error'), _(AvaTaxError(result.ResultCode, result.Messages)))
             else:
                 return result
             

@@ -15,11 +15,13 @@
         	
 	            <field name="parent_id" position="before">
 	                <label for="customer_code" class="oe_edit_only"/>
-	                <field name="customer_code" placeholder="Customer/Vendor Code" /> <!-- readonly="1" -->
+	                <field name="customer_code" placeholder="Customer/Vendor Code" readonly="1" />		
+					<button name="generate_cust_code" string="Generate Customer Code" type="object" attrs="{'invisible': [('customer_code','!=',False)]}"  />			 
 	            </field>
+				
 	            
 	            <xpath expr="/form/sheet/notebook/page[@string='Accounting']" position="after">
-	        	    <page string="Avatax">
+	        	    <page string="AvaTax">
 	        	        <group col="4" colspan="2">
 		                    <field name="latitude" readonly="1" invisible="1"/>
 		                    <field name="longitude" readonly="1" invisible="1"/>
@@ -43,6 +45,8 @@
 		                
 	        	    </page>
 	        	</xpath>
+
+
       </field>
     </record>
     

@@ -39,7 +39,7 @@ class avalara_salestax_ping(osv.osv_memory):
 
 
     def ping(self, cr, uid, context=None):
-        """ Call the Avatax's Ping Service to test the connection. """
+        """ Call the AvaTax's Ping Service to test the connection. """
         if context is None:
             context = {}
 
