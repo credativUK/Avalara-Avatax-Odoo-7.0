@@ -43,12 +43,15 @@ class account_tax(osv.osv):
 
         currency_code = self._get_currency(cr, uid, context)
         
+        if not partner.customer_code:
+            raise osv.except_osv(_('Avatax: Warning !'), _('Customer Code for customer %s not define'% (partner.name)))
+        
         if not shipping_address_id:
             raise osv.except_osv(_('Avatax: No Shipping Address Defined !'), _('There is no shipping address defined for the partner.'))        
         #it's show destination address
         shipping_address = address_obj.browse(cr, uid, shipping_address_id, context=context)
         if not lines:
-            raise osv.except_osv(_('Avatax: Warning !'), _('AvaTax needs atleast one sale order line defined for tax calculation.'))
+            raise osv.except_osv(_('Avatax: Error !'), _('AvaTax needs atleast one sale order line defined for tax calculation.'))
         
         if avatax_config.force_address_validation:
             if not shipping_address.date_validation:

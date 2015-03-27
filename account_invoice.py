@@ -30,7 +30,14 @@ def get_address_for_tax(self, cr, uid, ids, context=None):
     """ partner address, on which avalara tax will calculate  """
     for inv_obj in self.pool.get('account.invoice').browse(cr, uid, ids, context):
         if inv_obj.origin:
-            sale_ids = self.pool.get('sale.order').search(cr, uid, [('name','=',inv_obj.origin)], context=context)
+            a = inv_obj.origin
+            
+            if len(a.split(':')) > 1:
+                so_origin = a.split(':')[1]
+            else:
+                so_origin = a.split(':')[0]
+                
+            sale_ids = self.pool.get('sale.order').search(cr, uid, [('name','=',so_origin)], context=context)
             for order in self.pool.get('sale.order').browse(cr, uid, sale_ids, context):
                 if order.tax_add_invoice:
                     return order.partner_invoice_id.id
@@ -250,7 +257,7 @@ class account_invoice(osv.osv):
         
         for invoice in self.browse(cr, uid, ids, context=context):
             res_obj = partner_obj.browse(cr, uid, invoice.partner_id.id)
-            if avatax_config and not avatax_config.disable_tax_calculation:
+            if avatax_config and not avatax_config.disable_tax_calculation and invoice.type in ['out_invoice','out_refund']:
                 shipping_add_id = get_address_for_tax(self, cr, uid, [invoice.id], context)
                 sign = invoice.type == 'out_invoice' and 1 or -1
                 lines1 = self.create_lines(cr, uid, invoice.invoice_line, sign)
@@ -305,7 +312,7 @@ class account_invoice(osv.osv):
         o_tax_amt = 0.0
         s_tax_amt = 0.0
         for invoice in self.browse(cr, uid, ids, context=context):
-            if avatax_config and not avatax_config.disable_tax_calculation:
+            if avatax_config and not avatax_config.disable_tax_calculation and invoice.type in ['out_invoice','out_refund']:
                 shipping_add_id = get_address_for_tax(self, cr, uid, [invoice.id], context)
                 sign = invoice.type == 'out_invoice' and 1 or -1
                 lines1 = self.create_lines(cr, uid, invoice.invoice_line, sign)
@@ -450,7 +457,9 @@ class account_invoice(osv.osv):
         partner_obj = self.pool.get('res.partner')
         res_obj = partner_obj.browse(cr, uid, inv.partner_id.id)
         
-        if avatax_config and not avatax_config.disable_tax_calculation:
+        
+        #invoice type check when avalara config working and supplier invoice refund by default functionality
+        if avatax_config and not avatax_config.disable_tax_calculation and inv.type in ['out_invoice', 'out_refund']:
             if not inv.tax_line:
                 for tax in compute_taxes.values():
                     ait_obj.create(cr, uid, tax)
@@ -460,6 +469,7 @@ class account_invoice(osv.osv):
                     if tax.manual:
                         continue
                     key = (tax.tax_code_id.id, tax.base_code_id.id, tax.account_id.id)
+                    
                     tax_key.append(key)
                     if not key in compute_taxes:
                         raise osv.except_osv(_('Warning!'), _('Global taxes defined, but they are not in invoice lines !'))
@@ -676,15 +686,18 @@ class account_invoice_tax(osv.osv):
                         val['tax_amount'] = cur_obj.compute(cr, uid, invoice.currency_id.id, company_currency, val['amount'] * tax['tax_sign'], context={'date': invoice.date_invoice or time.strftime('%Y-%m-%d')}, round=False)
                         val['account_id'] = tax['account_collected_id'] or line.account_id.id
                         val['account_analytic_id'] = tax['account_analytic_collected_id']
+                        val['base_sign'] = tax['base_sign']
                     else:
                         val['base_code_id'] = tax['ref_base_code_id']
+                        val['ref_base_code_id'] = tax['ref_base_code_id']
                         val['tax_code_id'] = tax['ref_tax_code_id']
                         val['base_amount'] = cur_obj.compute(cr, uid, invoice.currency_id.id, company_currency, val['base'] * tax['ref_base_sign'], context={'date': invoice.date_invoice or time.strftime('%Y-%m-%d')}, round=False)
                         val['tax_amount'] = cur_obj.compute(cr, uid, invoice.currency_id.id, company_currency, val['amount'] * tax['ref_tax_sign'], context={'date': invoice.date_invoice or time.strftime('%Y-%m-%d')}, round=False)
                         val['account_id'] = tax['account_paid_id'] or line.account_id.id
                         val['account_analytic_id'] = tax['account_analytic_paid_id']
+                        val['ref_base_sign'] = tax['ref_base_sign']
     
-                    key = (val['tax_code_id'], val['base_code_id'], val['account_id'])
+                    key = (val['tax_code_id'], val['base_code_id'], val['account_id'], val['account_analytic_id'])
                     if not key in tax_grouped:
                         tax_grouped[key] = val
                     else:

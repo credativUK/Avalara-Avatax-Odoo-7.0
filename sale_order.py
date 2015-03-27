@@ -62,13 +62,11 @@ class sale_order(osv.osv):
                  
             if 'tax_add_shipping' in vals and vals['tax_add_shipping']:
                  vals['tax_add_id'] = self_obj.partner_shipping_id.id
-        
-        
+                 
         if 'partner_id' in vals:
             res_obj = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
             vals['exemption_code'] = res_obj.exemption_number or ''
             vals['exemption_code_id'] = res_obj.exemption_code_id.id or None
-            
             if res_obj.validation_method:
                 vals['is_add_validate'] = True
             else:
@@ -108,6 +106,13 @@ class sale_order(osv.osv):
                     
         return inv_id
     
+#    def _amount_shipment_tax(self, cr, uid, shipment_taxes, shipment_charge):
+#        val = 0.0
+#        for c in self.pool.get('account.tax').compute_all(cr, uid, shipment_taxes, shipment_charge, 1)['taxes']:
+#            val += c.get('amount', 0.0)
+#        return val
+    
+
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
         """Method override to add shipping charges, taxes and update sale order total
         @param shipping_line: if shipping line present then it will send shipping charge, tax
@@ -116,36 +121,22 @@ class sale_order(osv.osv):
         cur_obj=self.pool.get('res.currency')
         res = {}
         val = val1 = 0.0
-        avatax_config_obj = self.pool.get('avalara.salestax')
-        avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid)
         for order in self.browse(cr, uid, ids, context=context):
             res[order.id] = {
-                    'amount_untaxed': 0.0,
-                    'amount_tax': 0.0,
-                    'amount_total': 0.0,
-                    'amount_shipping': 0.0,
-                }
-                
-            if avatax_config and not avatax_config.disable_tax_calculation:
-                for line in order.order_line:
-                  res[order.id]['amount_untaxed'] += line.price_subtotal
-                  val += self._amount_line_tax(cr, uid, line, context=context)
-                val1 = val + order.tax_amount
-                res[order.id]['amount_tax'] = cur_obj.round(cr, uid, order.pricelist_id.currency_id, val1)
-                
-                for ship_line in order.shipping_lines:
-                  res[order.id]['amount_shipping'] += ship_line.shipping_cost
-                  
-                res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax'] + res[order.id]['amount_shipping']
-                
-            else:
-                res = super(sale_order, self)._amount_all(cr, uid, ids, field_name, arg, context=context)
-                res[order.id].update({'amount_shipping': 0.0})
-                
-                for ship_line in order.shipping_lines:
-                  res[order.id]['amount_shipping'] += ship_line.shipping_cost
-                res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax'] + res[order.id]['amount_shipping']
-
+                        'amount_untaxed': 0.0,
+                        'amount_tax': 0.0,
+                        'amount_total': 0.0,
+                        'amount_shipping': 0.0,
+                        }
+            for line in order.order_line:
+              res[order.id]['amount_untaxed'] += line.price_subtotal
+              val += self._amount_line_tax(cr, uid, line, context=context)
+            val1 = val + order.tax_amount
+            res[order.id]['amount_tax'] = cur_obj.round(cr, uid, order.pricelist_id.currency_id, val1)
+            
+            for ship_line in order.shipping_lines:
+              res[order.id]['amount_shipping'] += ship_line.shipping_cost
+            res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax'] + res[order.id]['amount_shipping']                 
         return res
 
     def _get_order(self, cr, uid, ids, context=None):
@@ -191,7 +182,7 @@ class sale_order(osv.osv):
 
     _columns = {
         'exemption_code': fields.char('Exemption Number', help="It show the customer exemption number"),
-        'is_add_validate': fields.boolean('Address validated', help="It used to indicate address is validate by avalara for tax calculation"),
+        'is_add_validate': fields.boolean('Address validated',),
         'exemption_code_id': fields.many2one('exemption.code', 'Exemption Code', help="It show the customer exemption code"),
         'shipping_lines': fields.one2many('shipping.order.line','sale_ship_id', 'Avatax Shipping Lines', readonly=True, states={'draft': [('readonly', False)], 'sent': [('readonly', False)]}),       
         'amount_shipping': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Shipping Cost',
@@ -199,7 +190,7 @@ class sale_order(osv.osv):
                 'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
                 'shipping.order.line': (_get_ship_order, ['name', 'shipping_cost'], 10),
             },
-            multi='sums', help="The amount without tax."),
+             multi='sums', help="The amount without tax."),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
             store = {
                 'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
@@ -403,6 +394,10 @@ class shipping_rate_config(osv.osv):
                 'shipping_cost':fields.float('Shipping Cost'),
                 'account_id':fields.many2one('account.account','Account',help='This account represents the g/l account for booking shipping income.'),
     }
+    
+    _defaults = {
+                 'active':True,
+            }
 
 shipping_rate_config()
 

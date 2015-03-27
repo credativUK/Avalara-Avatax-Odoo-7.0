@@ -52,7 +52,7 @@ class AvaTaxService:
         try:
              svc = suds.client.Client(url=wsdl_url)
         except urllib2.URLError, details:
-            raise osv.except_osv(_('Server Failed to Response'), _(details))
+            raise osv.except_osv(_('Avatax: Server Failed to Response'), _(details))
         else:
             svc.set_options(service='%sSvc' % nameCap)
             svc.set_options(port='%sSvcSoap' % nameCap)
@@ -99,7 +99,7 @@ class AvaTaxService:
             raise osv.except_osv(_('Avatax: Server Failed to Response'), _(e.code))
         except urllib2.URLError, details:
             # We could also print the SOAP request here:
-            raise osv.except_osv(_('Avatax: Failed to reach the server'), _(details.reason))
+            raise osv.except_osv(_('Failed to reach the server'), _(details.reason))
         else:
             if (result.ResultCode != 'Success'):
                 raise osv.except_osv(('Avatax: Error'), _(AvaTaxError(result.ResultCode, result.Messages)))

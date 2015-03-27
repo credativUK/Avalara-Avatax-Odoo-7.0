@@ -74,7 +74,9 @@
 		                <field name="description" placeholder="describe the product characteristics..." nolabel="1"/>
 		            </group>
 		        </field>
+		        
 		        <field name="default_code" position="replace"/>
+		        
 		        <div name="options" groups="base.group_user" position="before">
 		            <label for="default_code" class="oe_edit_only"/>
                     <h2><field name="default_code"  placeholder="Product Code"/></h2>
