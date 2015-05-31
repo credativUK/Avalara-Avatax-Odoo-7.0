@@ -66,7 +66,7 @@ class account_tax(osv.osv):
         
         
         if not ship_from_address.date_validation:
-            raise osv.except_osv(_('Avatax: Address Not Validated !'), _('Please validate the company address.'))
+            raise osv.except_osv(_('Avatax: Address Not Validated !'), _('Please validate the address for your company in OpenERP.  When you setup a new instance of OpenERP you must also find your company in the contacts and ensure that the address is validated.'))
 
         #For check credential
         avalara_obj = AvaTaxService(avatax_config.account_number, avatax_config.license_key,
