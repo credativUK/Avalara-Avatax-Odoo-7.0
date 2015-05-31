@@ -40,8 +40,7 @@ class sale_order(osv.osv):
         res['value']['tax_address'] = str(addr.name+ '\n'+(addr.street or '')+ '\n'+(addr.city and addr.city+', ' or ' ')+(addr.state_id and addr.state_id.name or '')+ ' '+(addr.zip or '')+'\n'+(addr.country_id and addr.country_id.name or ''))
         if res_obj.validation_method:res['value']['is_add_validate'] = True
         else:res['value']['is_add_validate'] = False
-        return res
-                
+        return res            
     
     def create(self, cr, uid, vals, context=None):
         if vals['partner_id']:
