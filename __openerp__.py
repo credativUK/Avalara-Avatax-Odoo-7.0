@@ -21,7 +21,7 @@
 
 {
     "name" : "Avalara Avatax connector for sales tax calculation",
-    "version" : "7.0.17b",
+    "version" : "7.0.17c",
     "author" : 'Kranbery Technologies',
     'summary': 'Sales tax is hard. We make it easy.',
     "description": """ 
