@@ -21,6 +21,7 @@
 from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
+import unicodedata
 
 class sale_order(osv.osv):
     _inherit = "sale.order"
@@ -37,11 +38,11 @@ class sale_order(osv.osv):
         res['value']['exemption_code'] = res_obj.exemption_number or ''
         res['value']['exemption_code_id'] = res_obj.exemption_code_id.id or None
         res['value']['tax_add_shipping'] = True
-        res['value']['tax_address'] = str(addr.name+ '\n'+(addr.street or '')+ '\n'+(addr.city and addr.city+', ' or ' ')+(addr.state_id and addr.state_id.name or '')+ ' '+(addr.zip or '')+'\n'+(addr.country_id and addr.country_id.name or ''))
+        partner_name = addr.name
+        res['value']['tax_address'] = str(unicodedata.normalize('NFKD', partner_name).encode('ascii','ignore') + '\n'+(addr.street or '')+ '\n'+(addr.city and addr.city+', ' or ' ')+(addr.state_id and addr.state_id.name or '')+ ' '+(addr.zip or '')+'\n'+(addr.country_id and addr.country_id.name or ''))
         if res_obj.validation_method:res['value']['is_add_validate'] = True
         else:res['value']['is_add_validate'] = False
-        return res
-                
+        return res            
     
     def create(self, cr, uid, vals, context=None):
         if vals['partner_id']:

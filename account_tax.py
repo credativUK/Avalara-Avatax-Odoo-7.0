@@ -39,7 +39,12 @@ class account_tax(osv.osv):
 
     def _get_compute_tax(self, cr, uid, avatax_config, doc_date, doc_code, doc_type, partner, ship_from_address_id, shipping_address_id,
                           lines, user=None, exemption_number=None, exemption_code_name=None, commit=False, invoice_date=False, reference_code=False, location_code=False, context=None):
-        address_obj = self.pool.get('res.partner')
+
+        # Clean extended descriptions to 255 chars to be compatible with Avatax server
+        for line in lines:
+            line['description'] = line['description'] and line['description'][:255]
+                
+        address_obj = self.pool.get('res.partner')        
         currency_code = self._get_currency(cr, uid, context)
         if not partner.customer_code:
             raise osv.except_osv(_('Avatax: Warning !'), _('Customer Code for customer %s not define'% (partner.name)))
@@ -66,7 +71,7 @@ class account_tax(osv.osv):
         
         
         if not ship_from_address.date_validation:
-            raise osv.except_osv(_('Avatax: Address Not Validated !'), _('Please validate the company address.'))
+            raise osv.except_osv(_('Avatax: Address Not Validated !'), _('Please validate the address for your company in OpenERP.  When you setup a new instance of OpenERP you must also find your company in the contacts and ensure that the address is validated.'))
 
         #For check credential
         avalara_obj = AvaTaxService(avatax_config.account_number, avatax_config.license_key,
