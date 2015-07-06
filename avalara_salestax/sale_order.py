@@ -26,6 +26,14 @@ import unicodedata
 class sale_order(osv.osv):
     _inherit = "sale.order"
     
+    def generate_tax_address(self, cr, uid, ids, addr, context=None):
+        tax_address = addr.name + '\n' + \
+            (addr.street or '')+ '\n' + \
+            (addr.city and addr.city+', ' or ' ')+(addr.state_id and addr.state_id.name or '')+ ' '+(addr.zip or '')+'\n' + \
+            (addr.country_id and addr.country_id.name or '')
+        tax_address_normalized = str(unicodedata.normalize('NFKD', tax_address).encode('ascii','ignore'))
+        return tax_address_normalized
+    
     def onchange_partner_id(self, cr, uid, ids, part, context=None):
         """Override method to add new fields values.
         @param part- update vals with partner exemption number and code, 
@@ -38,8 +46,7 @@ class sale_order(osv.osv):
         res['value']['exemption_code'] = res_obj.exemption_number or ''
         res['value']['exemption_code_id'] = res_obj.exemption_code_id.id or None
         res['value']['tax_add_shipping'] = True
-        partner_name = addr.name
-        res['value']['tax_address'] = str(unicodedata.normalize('NFKD', partner_name).encode('ascii','ignore') + '\n'+(addr.street or '')+ '\n'+(addr.city and addr.city+', ' or ' ')+(addr.state_id and addr.state_id.name or '')+ ' '+(addr.zip or '')+'\n'+(addr.country_id and addr.country_id.name or ''))
+        res['value']['tax_address'] = self.generate_tax_address(cr, uid, ids, addr, context=context)
         if res_obj.validation_method:res['value']['is_add_validate'] = True
         else:res['value']['is_add_validate'] = False
         return res            
@@ -67,7 +74,7 @@ class sale_order(osv.osv):
                 ship_add_id = vals['partner_shipping_id']
                 
             addr = self.pool.get('res.partner').browse(cr, uid, ship_add_id or vals['partner_id'])
-            vals['tax_address'] = str(addr.name+ '\n'+(addr.street or '')+ '\n'+(addr.city and addr.city+', ' or ' ')+(addr.state_id and addr.state_id.name or '')+ ' '+(addr.zip or '')+'\n'+(addr.country_id and addr.country_id.name or ''))
+            vals['tax_address'] = self.generate_tax_address(cr, uid, [], addr, context=context)
         return super(sale_order, self).create(cr, uid, vals, context=context)
 #    
     def write(self, cr, uid, ids, vals, context=None):
@@ -84,7 +91,7 @@ class sale_order(osv.osv):
                 ship_add_id = addr['delivery'] or vals['partner_id']
         if ship_add_id:
             addr = self.pool.get('res.partner').browse(cr, uid, ship_add_id, context=context)
-            vals['tax_address'] = str(addr.name+ '\n'+(addr.street or '')+ '\n'+(addr.city and addr.city+', ' or ' ')+(addr.state_id and addr.state_id.name or '')+ ' '+(addr.zip or '')+'\n'+(addr.country_id and addr.country_id.name or ''))   
+            vals['tax_address'] = self.generate_tax_address(cr, uid, ids, addr, context=context)
                 
                  
         if 'partner_id' in vals:
@@ -179,21 +186,21 @@ class sale_order(osv.osv):
     def default_tax_address(self, cr, uid, ids, ship_id, tax_add_id, context=None):
         if ship_id and tax_add_id:
             addr = self.pool.get('res.partner').browse(cr, uid, tax_add_id, context=context)
-            tax_address = str(addr.name+ '\n'+(addr.street or '')+ '\n'+(addr.city and addr.city+', ' or ' ')+(addr.state_id and addr.state_id.name or '')+ ' '+(addr.zip or '')+'\n'+(addr.country_id and addr.country_id.name or ''))
+            tax_address = self.generate_tax_address(cr, uid, ids, addr, context=context)
             return {'value':{'tax_add_default':True, 'tax_add_invoice':False, 'tax_add_shipping':False, 'tax_address':tax_address}}
         return {}
     
     def invoice_tax_address(self, cr, uid, ids, inv_id, tax_add_id, part_id, context=None):
         if inv_id and tax_add_id or inv_id and part_id:
             addr = self.pool.get('res.partner').browse(cr, uid, tax_add_id or part_id, context=context)
-            tax_address = str(addr.name+ '\n'+(addr.street or '')+ '\n'+(addr.city and addr.city+', ' or ' ')+(addr.state_id and addr.state_id.name or '')+ ' '+(addr.zip or '')+'\n'+(addr.country_id and addr.country_id.name or ''))
+            tax_address = self.generate_tax_address(cr, uid, ids, addr, context=context)
             return {'value':{'tax_add_default':False, 'tax_add_invoice':True, 'tax_add_shipping':False, 'tax_address':tax_address}}
         return {}
     
     def delivery_tax_address(self, cr, uid, ids, del_id, tax_add_id, part_id, context=None):
         if del_id and tax_add_id or del_id and part_id:
             addr = self.pool.get('res.partner').browse(cr, uid, tax_add_id or part_id, context=context)
-            tax_address = str(addr.name+ '\n'+(addr.street or '')+ '\n'+(addr.city and addr.city+', ' or ' ')+(addr.state_id and addr.state_id.name or '')+ ' '+(addr.zip or '')+'\n'+(addr.country_id and addr.country_id.name or ''))
+            tax_address = self.generate_tax_address(cr, uid, ids, addr, context=context)
             return {'value':{'tax_add_default':False, 'tax_add_invoice':False, 'tax_add_shipping':True, 'tax_address':tax_address}}
         return {}
     
