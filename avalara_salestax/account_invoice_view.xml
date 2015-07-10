@@ -47,9 +47,7 @@
                     <field name="is_add_validate" readonly="1" invisible="1"/>
                 </xpath>
                 
-				<button name="button_reset_taxes" states="draft,proforma2"
-                                        string="(update)" class="oe_link oe_edit_only"
-                                        type="object" help="Recompute taxes and total" position="replace">
+				<button name="button_reset_taxes" position="replace">
 				     <button name="button_reset_taxes" states="draft,proforma2"
                                         string="Compute Taxes" class="oe_link oe_edit_only"
                                         type="object" help="Recompute taxes and total"/>
@@ -97,9 +95,7 @@
                     </field>
                 </field> -->
                 
-				<button name="button_reset_taxes" states="draft,proforma2"
-                                        string="(update)" class="oe_link oe_edit_only"
-                                        type="object" help="Recompute taxes and total" position="replace">
+				<button name="button_reset_taxes" position="replace">
 				     <button name="button_reset_taxes" states="draft,proforma2"
                                         string="Compute Taxes" class="oe_link oe_edit_only"
                                         type="object" help="Recompute taxes and total"/>
