@@ -34,10 +34,6 @@ class product_tax_code(osv.osv):
         'description': fields.char('Description', size=64),
         'type': fields.selection([('product', 'Product'), ('freight', 'Freight'), ('service', 'Service'),
                           ('digital', 'Digital'), ('other', 'Other')], 'Type', required=True, help="Type of tax code as defined in AvaTax"),
-        'company_id': fields.many2one('res.company', 'Company', required=True),
-    }
-    _defaults = {
-        'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'product.tax.code', context=c),
     }
 
 product_tax_code()
@@ -45,33 +41,8 @@ product_tax_code()
 class product_template(osv.osv):
     _inherit = "product.template"
     
-    
-    def create(self, cr, uid, vals, context=None):
-        p_temp = self.pool.get('product.template')
-        p_id = super(product_template, self).create(cr, uid, vals, context)
-        p_brw = p_temp.browse(cr, uid, p_id)
-        if p_brw.categ_id and p_brw.categ_id.tax_code_id:
-            p_temp.write(cr, uid, [p_id], {'tax_apply': True, 'tax_code_id': p_brw.categ_id.tax_code_id.id})
-        else:
-            p_temp.write(cr, uid, [p_id], {'tax_apply': False, 'tax_code_id': False})
-        return p_id
-    
-    def write(self, cr, uid, ids, vals, context=None):
-        if 'categ_id' in vals:
-            p_brw = self.pool.get('product.category').browse(cr, uid, vals['categ_id'])
-            if p_brw.tax_code_id:
-                vals['tax_apply'] = True
-                vals['tax_code_id'] = p_brw.tax_code_id.id
-            else:
-                vals['tax_apply'] = False
-                vals['tax_code_id'] = False
-        return super(product_template, self).write(cr, uid, ids, vals, context)
-            
-    
     _columns = {
-        'tax_code_id': fields.many2one('product.tax.code', 'Tax Code', help="AvaTax Tax Code"),
-#        'tax_code_id': fields.related('categ_id', 'tax_code_id', type="many2one", relation="product.tax.code", string="Tax Code", store=True, help="AvaTax Tax Code"),
-        'tax_apply': fields.boolean('Tax Calculation',help="Use Following Tax code for this Product"),
+        'tax_code_id': fields.related('categ_id', 'tax_code_id', type="many2one", relation="product.tax.code", string="Tax Code", help="AvaTax Tax Code"),
     }
 
 product_template()
@@ -85,18 +56,6 @@ class product_product(osv.osv):
         ('name_uniq', 'unique(default_code)', 'Product Reference Code must be unique per Company!'),
     ]
     
-    def onchange_categ(self, cr, uid, ids, categ_id, context=None):
-        res = {
-               'tax_apply': False,
-               'tax_code_id': False
-               }
-        if categ_id:
-            p_brw = self.pool.get('product.category').browse(cr, uid, categ_id)
-            if p_brw.tax_code_id:
-                res['tax_apply'] = True
-                res['tax_code_id'] = p_brw.tax_code_id.id
-        return {'value': res} 
-    
 product_product()
 
 class product_category(osv.osv):
@@ -105,6 +64,15 @@ class product_category(osv.osv):
         'tax_code_id': fields.many2one('product.tax.code', 'Tax Code', help="AvaTax Tax Code")
     }
 
+    def _get_default_tax_code(self, cr, uid, context=None):
+        """ Returns the default product tax code."""
+
+        tax_code_pool = self.pool.get('product.tax.code')
+        return tax_code_pool.search(cr, uid, [('name', '=', 'ProdTax')], context=context)
+
+    _defaults = {
+        'tax_code_id': _get_default_tax_code,
+    }
 product_category()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

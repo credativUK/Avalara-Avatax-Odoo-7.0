@@ -15,7 +15,6 @@
                     <field name="name"/>
                     <field name="description"/>
                     <field name="type"/>
-                    <field name="company_id" groups="base.group_multi_company"/>
                 </tree>
             </field>
         </record>
@@ -29,7 +28,6 @@
                     <sheet>
                         <group col="4" colspan="4">
                             <field name="name"/>
-		                    <field name="company_id" groups="base.group_multi_company"/>
 		                    <field name="description"/>
 		                    <field name="type"/>
                         </group>                        
@@ -59,19 +57,6 @@
             <field name="inherit_id" ref="product.product_normal_form_view"/>
             <field name="priority">30</field>
             <field name="arch" type="xml">
-                <field name="categ_id" position="replace">
-                    <field name="categ_id" on_change="onchange_categ(categ_id)"/>
-                </field>
-		        <xpath expr="/form/sheet/notebook/page[@string='Accounting']" position="after">
-		          <page string="Avatax">
-		              <separator string="AvaTax Properties" colspan="4"/>
-			          <group colspan="2" col="2">
-			            <field name="tax_apply" readonly="1"/>
-	                   	<newline/>
-			            <field name="tax_code_id" attrs="{'required': [('tax_apply','=',True)]}" readonly="1"/>
-			          </group>
-		          </page>
-		        </xpath>
 		        <field name="description" position="replace">
 		            <group colspan="2" col="2" string="Product Description" >
 		                <field name="description" placeholder="describe the product characteristics..." nolabel="1"/>

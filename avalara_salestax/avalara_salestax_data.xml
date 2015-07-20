@@ -99,10 +99,11 @@
 	           <field name="type_tax_use">sale</field>
 	       </record>
 	       
-        
-        
-        
-        
+        <record id="default_product_tax_code" model="product.tax.code">
+            <field name="name">ProdTax</field>
+            <field name="description">Product Tax</field>
+            <field name="type">product</field>
+        </record>
 
   </data>
 </openerp>
