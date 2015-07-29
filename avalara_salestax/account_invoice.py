@@ -634,6 +634,8 @@ class account_invoice_tax(osv.osv):
                 
                 for line in invoice.invoice_line:
                     tax_id = account_tax_obj.search(cr, uid, [('name','=','AVATAX'),('company_id','=',invoice.company_id.id)])
+                    if not tax_id:
+                        raise osv.except_osv(_('Avatax: Warning !'), _('Please configure an AVATAX tax code for each company through Accounting->Configuration->Taxes->Taxes'))
                     tax_brw = account_tax_obj.browse(cr, uid, tax_id[0])
                     taxes= account_tax_obj.browse(cr, uid, tax_id)
                     if not tax_brw.account_collected_id or not tax_brw.account_paid_id or not tax_brw.base_code_id or not tax_brw.tax_code_id or not tax_brw.ref_base_code_id or not tax_brw.ref_tax_code_id:
