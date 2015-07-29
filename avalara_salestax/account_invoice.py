@@ -633,7 +633,7 @@ class account_invoice_tax(osv.osv):
                                                             context=context).TotalTax
                 
                 for line in invoice.invoice_line:
-                    tax_id = account_tax_obj.search(cr, uid, [('name','=','AVATAX')])
+                    tax_id = account_tax_obj.search(cr, uid, [('name','=','AVATAX'),('company_id','=',invoice.company_id.id)])
                     tax_brw = account_tax_obj.browse(cr, uid, tax_id[0])
                     taxes= account_tax_obj.browse(cr, uid, tax_id)
                     if not tax_brw.account_collected_id or not tax_brw.account_paid_id or not tax_brw.base_code_id or not tax_brw.tax_code_id or not tax_brw.ref_base_code_id or not tax_brw.ref_tax_code_id:
