@@ -172,11 +172,13 @@ class avalara_salestax(osv.osv):
         ('account_number_company_uniq', 'unique (account_number, company_id)', 'The account number must be unique per company!'),
     ]
 
-    def _get_avatax_config_company(self, cr, uid, context=None):
+    def _get_avatax_config_company(self, cr, uid, company_id=False, context=None):
         """ Returns the AvaTax configuration for the user company """
-        user_obj = self.pool.get('res.users')
-        user = user_obj.browse(cr, uid, uid, context=context)
-        avatax_config_ids = self.search(cr, uid, [('company_id', '=', user.company_id.id)], context=context)
+        if not company_id:
+            user_obj = self.pool.get('res.users')
+            user = user_obj.browse(cr, uid, uid, context=context)
+            company_id = user.company_id.id
+        avatax_config_ids = self.search(cr, uid, [('company_id', '=', company_id)], context=context)
         return avatax_config_ids and self.browse(cr, uid, avatax_config_ids[0], context=context) or False
 
 avalara_salestax()

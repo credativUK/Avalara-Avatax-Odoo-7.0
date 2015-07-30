@@ -293,7 +293,6 @@ class sale_order(osv.osv):
         """
         avatax_config_obj = self.pool.get('avalara.salestax')
         account_tax_obj = self.pool.get('account.tax')
-        avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid)
         partner_obj = self.pool.get('res.partner')
         order_line = self.pool.get('sale.order.line')
         ship_order_line = self.pool.get('shipping.order.line')
@@ -302,6 +301,7 @@ class sale_order(osv.osv):
         s_tax_amt = 0.0
         lines = []
         for order in self.browse(cr, uid, ids):
+            avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, order.company_id, context=context)
             c_code = partner_obj.browse(cr, uid, order.partner_id.id).country_id.code or False
             cs_code = []        #Countries where Avalara address validation is enabled
             for c_brw in avatax_config.country_ids:

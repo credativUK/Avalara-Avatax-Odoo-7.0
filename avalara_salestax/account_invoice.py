@@ -274,13 +274,13 @@ class account_invoice(osv.osv):
         if context is None:
             context = {}
         avatax_config_obj = self.pool.get('avalara.salestax')
-        avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid)
         account_tax_obj = self.pool.get('account.tax')
         partner_obj = self.pool.get('res.partner')
         o_tax_amt = 0.0
         s_tax_amt = 0.0
         
         for invoice in self.browse(cr, uid, ids, context=context):
+            avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, invoice.company_id, context=context)
             c_code = partner_obj.browse(cr, uid, invoice.partner_id.id).country_id.code or False
             cs_code = []        #Countries where Avalara address validation is enabled
             for c_brw in avatax_config.country_ids:
@@ -310,8 +310,8 @@ class account_invoice(osv.osv):
         invoice_obj = self.pool.get('account.invoice.line')
         ship_order_line = self.pool.get('shipping.order.line')
         
-        avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid)
         for invoice in self.browse(cr, uid, ids, context=context):
+            avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, invoice.company_id, context=context)
             c_code = partner_obj.browse(cr, uid, invoice.partner_id.id).country_id.code or False
             cs_code = []        #Countries where Avalara address validation is enabled
             for c_brw in avatax_config.country_ids:
@@ -342,10 +342,10 @@ class account_invoice(osv.osv):
         invoice_obj = self.pool.get('account.invoice.line')
         ship_order_line = self.pool.get('shipping.order.line')
         
-        avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid)
         o_tax_amt = 0.0
         s_tax_amt = 0.0
         for invoice in self.browse(cr, uid, ids, context=context):
+            avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, invoice.company_id, context=context)
             c_code = partner_obj.browse(cr, uid, invoice.partner_id.id).country_id.code or False
             cs_code = []        #Countries where Avalara address validation is enabled
             for c_brw in avatax_config.country_ids:
@@ -478,11 +478,11 @@ class account_invoice(osv.osv):
     def action_cancel(self, cr, uid, ids, *args):
         account_tax_obj = self.pool.get('account.tax')
         avatax_config_obj = self.pool.get('avalara.salestax')
-        avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid)
         partner_obj = self.pool.get('res.partner')
         res = super(account_invoice, self).action_cancel(cr, uid, ids, *args)
 
         for invoice in self.browse(cr, uid, ids, *args):
+            avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, invoice.company_id)
             c_code = partner_obj.browse(cr, uid, invoice.partner_id.id).country_id.code or False
             cs_code = []        #Countries where Avalara address validation is enabled
             for c_brw in avatax_config.country_ids:
@@ -495,7 +495,7 @@ class account_invoice(osv.osv):
 
     def check_tax_lines(self, cr, uid, inv, compute_taxes, ait_obj):
         avatax_config_obj = self.pool.get('avalara.salestax')
-        avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid)
+        avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, inv.company_id)
         partner_obj = self.pool.get('res.partner')
         c_code = partner_obj.browse(cr, uid, inv.partner_id.id).country_id.code or False
         
@@ -579,7 +579,7 @@ class account_invoice_tax(osv.osv):
         cur = invoice.currency_id
         company_currency = invoice.company_id.currency_id.id
         
-        avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid)
+        avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, invoice.company_id, context=context)
         
         lines = []
         lines1 = []
@@ -799,9 +799,9 @@ class account_invoice_line(osv.osv):
         invoice_obj = self.pool.get('account.invoice')
         ait_obj = self.pool.get('account.invoice.tax')
         avatax_config_obj = self.pool.get('avalara.salestax')
-        avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid)
         
         invoice = invoice_obj.browse(cr, uid, invoice_id, context=context)
+        avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, invoice.company_id, context=context)
         company_currency = invoice.company_id.currency_id.id
 
         partner_obj = self.pool.get('res.partner')
