@@ -45,7 +45,6 @@ class account_tax(osv.osv):
             line['description'] = line['description'] and line['description'][:255]
                 
         address_obj = self.pool.get('res.partner')
-        import ipdb; ipdb.set_trace()
         transaction_company = avatax_config and avatax_config.company_id or False
         currency_code = self._get_currency(cr, uid, transaction_company, context)
         if not partner.customer_code:
