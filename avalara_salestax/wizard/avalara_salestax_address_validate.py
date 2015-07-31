@@ -56,7 +56,9 @@ class avalara_salestax_address_validate(osv.osv_memory):
         # Prevent validating the address if the address validation is disabled by the administrator.
 
         if context.get('active_id', False) and context.get('active_model', False) == 'res.partner':
-            avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, context=context)
+            company = self.pool.get('res.partner').read(cr, uid, context['active_id'], ['company_id'], context=context)['company_id']
+            company_id = company and company[0] or False
+            avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, company_id, context=context)
             if not avatax_config:
                 raise osv.except_osv(_('Avatax: Service Not Setup'), _("The AvaTax Tax Service is not active."))
             address = address_obj.browse(cr, uid, context['active_id'], context=context)

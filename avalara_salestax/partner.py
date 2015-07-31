@@ -104,7 +104,9 @@ class res_partner(osv.osv):
             vals['country_id'] = vals.get('country_id') and vals['country_id'][0]
             
             avatax_config_obj= self.pool.get('avalara.salestax')
-            avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, context=context)
+            company = address_obj.read(cr, uid, val_id, ['company_id'], context=context)['company_id']
+            company_id = company and company[0] or False
+            avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, company_id, context=context)
 
             if avatax_config:
                 try:
@@ -175,7 +177,9 @@ class res_partner(osv.osv):
             context = {}
 
         if not avatax_config:
-            avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, context=context)
+            company = self.read(cr, uid, address['id'], ['company_id'], context=context)['company_id']
+            company_id = company and company[0] or False
+            avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, company_id, context=context)
         # Create the AvaTax Address service with the configuration parameters set for the instance
         avapoint = AvaTaxService(avatax_config.account_number, avatax_config.license_key,
                         avatax_config.service_url, avatax_config.request_timeout, avatax_config.logging)
@@ -199,7 +203,9 @@ class res_partner(osv.osv):
                 vals.get('country_id') or vals.get('state_id')):
                 address_obj = self.pool.get('res.partner')
                 avatax_config_obj= self.pool.get('avalara.salestax')
-                avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, context=context)
+                company = self.read(cr, uid, ids[0], ['company_id'], context=context)['company_id']
+                company_id = company and company[0] or False
+                avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, company_id, context=context)
     
                 if avatax_config and avatax_config.validation_on_save:
                     brw_address = address_obj.read(cr, uid, ids[0], ['street', 'street2', 'city', 'state_id', 'zip', 'country_id'], context=context)
@@ -239,7 +245,7 @@ class res_partner(osv.osv):
     
                 address_obj = self.pool.get('res.partner')
                 avatax_config_obj= self.pool.get('avalara.salestax')
-                avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, context=context)
+                avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, vals.get('company_id', False), context=context)
                 
                 if vals.get('tax_exempt'):
                     if not vals.get('exemption_number') and vals.get('exemption_code_id') == False :

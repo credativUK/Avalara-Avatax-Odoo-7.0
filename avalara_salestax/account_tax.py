@@ -30,12 +30,12 @@ class account_tax(osv.osv):
     """Inherit to implement the tax using avatax API"""
     _inherit = "account.tax"
     
-    def _get_currency(self, cr, uid, ctx):
-        comp = self.pool.get('res.users').browse(cr,uid,uid).company_id
-        if not comp:
-            comp_id = self.pool.get('res.company').search(cr, uid, [])[0]
-            comp = self.pool.get('res.company').browse(cr, uid, comp_id)
-        return comp.currency_id.name
+    def _get_currency(self, cr, uid, company_id=False, ctx=None):
+        if not company_id:
+            company_id = self.pool.get('res.users').browse(cr, uid, uid, ctx).company_id
+        if not company_id:
+            return '' # This should not be reached
+        return company_id.currency_id.name
 
     def _get_compute_tax(self, cr, uid, avatax_config, doc_date, doc_code, doc_type, partner, ship_from_address_id, shipping_address_id,
                           lines, user=None, exemption_number=None, exemption_code_name=None, commit=False, invoice_date=False, reference_code=False, location_code=False, context=None):
@@ -44,8 +44,10 @@ class account_tax(osv.osv):
         for line in lines:
             line['description'] = line['description'] and line['description'][:255]
                 
-        address_obj = self.pool.get('res.partner')        
-        currency_code = self._get_currency(cr, uid, context)
+        address_obj = self.pool.get('res.partner')
+        import ipdb; ipdb.set_trace()
+        transaction_company = avatax_config and avatax_config.company_id or False
+        currency_code = self._get_currency(cr, uid, transaction_company, context)
         if not partner.customer_code:
             raise osv.except_osv(_('Avatax: Warning !'), _('Customer Code for customer %s not define'% (partner.name)))
         
