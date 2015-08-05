@@ -278,7 +278,6 @@ class account_invoice(osv.osv):
         partner_obj = self.pool.get('res.partner')
         o_tax_amt = 0.0
         s_tax_amt = 0.0
-        
         for invoice in self.browse(cr, uid, ids, context=context):
             avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, invoice.company_id.id, context=context)
             c_code = partner_obj.browse(cr, uid, invoice.partner_id.id).country_id.code or False
@@ -299,8 +298,7 @@ class account_invoice(osv.osv):
                                                    True, invoice.date_invoice,
                                                    invoice.invoice_doc_no, invoice.location_code or '', context=context)
             
-        self.write(cr, uid, ids, {'state':'paid'}, context=context)
-        return True
+        return super(account_invoice, self).confirm_paid(cr, uid, ids, context=context)
     
     
     def compute_tax(self, cr, uid, ids, context=None):
