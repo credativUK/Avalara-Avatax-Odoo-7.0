@@ -371,8 +371,21 @@ sale_order()
 
 class sale_order_line(osv.osv):
     _inherit = "sale.order.line"
+
+    def _get_line_tax(self, cr, uid, ids, field_name, arg, context=None):
+        if context is None:
+            context = {}
+        sale_obj = self.pool.get('sale.order')
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            tax_code_val = sale_obj._amount_line_tax(cr, uid, line, context=context)
+            avatax_val = line.tax_amt
+            res[line.id] = tax_code_val + avatax_val
+        return res
+
     _columns = {
             'tax_amt': fields.float('Avalara Tax', help="tax calculate by avalara"),
+            'line_tax': fields.function(_get_line_tax, string='Tax', digits_compute= dp.get_precision('Account'), help="Sum of tax code taxes and tax imported from Avatax"),
             }
 sale_order_line()
 
