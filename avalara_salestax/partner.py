@@ -44,7 +44,6 @@ class res_partner(osv.osv):
         'customer_code': fields.char('Customer Code', size=40),
         'tax_apply': fields.boolean('Tax Calculation',help="Indicates the avatax calculation is compulsory"),
         'tax_exempt': fields.boolean('Is Tax Exempt',help="Indicates the exemption tax calculation is compulsory"),
-        'vat_id': fields.char("VAT ID", help="Customers VAT number (Buyer VAT). Identifies the customer as a “Registered Business” and the tax engine will utilize that information in the tax decision process."),
     }
     _sql_constraints = [
         ('name_uniq', 'unique(customer_code)', 'Customer Code must be unique!'),

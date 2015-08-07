@@ -95,7 +95,7 @@ class account_tax(osv.osv):
                                  partner.customer_code, doc_code, origin, destination,
                                  lines, exemption_number,
                                  exemption_code_name,
-                                 user and user.name or None, commit, invoice_date, reference_code, location_code, currency_code, partner.vat_id or None)
+                                 user and user.name or None, commit, invoice_date, reference_code, location_code, currency_code, partner.vat or None)
         
         return result
 

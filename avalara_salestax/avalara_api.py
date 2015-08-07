@@ -130,7 +130,7 @@ class AvaTaxService:
 
     def get_tax(self, company_code, doc_date, doc_type, partner_code, doc_code, origin, destination,
                received_lines, exemption_no=None, customer_usage_type=None, salesman_code=None, commit=False, invoice_date=None, reference_code=None, 
-               location_code=None, currency_code='USD', vat_id=None):
+               location_code=None, currency_code='USD', vat=None):
         """ Create tax request and get tax amount by customer address
             @currency_code : 'USD' is the default currency code for avalara, if user not specify in the own company
             @request.DetailLevel = 'Document': Document (GetTaxResult) level details; TaxLines will not be returned.
@@ -167,7 +167,7 @@ class AvaTaxService:
         request.CustomerUsageType = customer_usage_type
         request.SalespersonCode = salesman_code
         request.CurrencyCode = currency_code
-        request.BusinessIdentificationNo = vat_id
+        request.BusinessIdentificationNo = vat
         
         addresses = self.taxSvc.factory.create('ArrayOfBaseAddress')
         addresses.BaseAddress = [origin, destination]
