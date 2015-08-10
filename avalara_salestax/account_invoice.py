@@ -195,7 +195,7 @@ class account_invoice(osv.osv):
     }
     
     _defaults = {
-        'tax_add_invoice': True,
+        'tax_add_shipping': True,
         }
     
     def finalize_invoice_move_lines(self, cr, uid, invoice_browse, move_lines):
@@ -778,7 +778,25 @@ class account_invoice_line(osv.osv):
                 result[line.id] += (line.product_id.weight_net
                      * line.quantity)# / line.product_uom.factor)
         return result
-    
+
+    def _get_line_tax(self, cr, uid, ids, field_name, arg, context=None):
+        if context is None:
+            context = {}
+        sale_obj = self.pool.get('account.invoice')
+        tax_obj = self.pool.get('account.tax')
+        cur_obj = self.pool.get('res.currency')
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            price = line.price_unit * (1-(line.discount or 0.0)/100.0)
+            taxes = tax_obj.compute_all(cr, uid, line.invoice_line_tax_id, price, line.quantity, product=line.product_id, partner=line.invoice_id.partner_id)
+            tax_code_val = taxes['taxes'] and taxes['taxes'][0] and taxes['taxes'][0].get('amount', 0.0) or 0.0
+            if line.invoice_id:
+                cur = line.invoice_id.currency_id
+                tax_code_val = cur_obj.round(cr, uid, cur, tax_code_val)
+            avatax_val = line.tax_amt
+            res[line.id] = tax_code_val + avatax_val
+        return res
+
     _columns = {
         'tax_amt': fields.float('Avalara Tax', help="tax calculate by avalara"),
         'weight_net': fields.function(_weight_net, method=True,
@@ -789,9 +807,9 @@ class account_invoice_line(osv.osv):
                    ['quantity', 'product_id'], -11),
             },
         ),
-
+        'line_tax': fields.function(_get_line_tax, string='Tax', digits_compute= dp.get_precision('Account'), help="Sum of tax code taxes and tax imported from Avatax"),
     }
-    
+
     def move_line_get(self, cr, uid, invoice_id, context=None):
         res = []
         tax_obj = self.pool.get('account.tax')
