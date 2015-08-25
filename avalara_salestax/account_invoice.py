@@ -108,7 +108,10 @@ class account_invoice(osv.osv):
         return result.keys()
 
     def create(self, cr, uid, vals, context=None):
-        if vals['partner_id']:
+        avatax_config_obj = self.pool.get('avalara.salestax')
+        avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, vals.get('company_id',False), context=context)
+        tax_calculation_disabled = avatax_config and avatax_config.disable_tax_calculation or True
+        if vals['partner_id'] and not tax_calculation_disabled:
             res_obj = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
             if 'exemption_code' in vals:
                 vals['exemption_code'] = vals['exemption_code']
