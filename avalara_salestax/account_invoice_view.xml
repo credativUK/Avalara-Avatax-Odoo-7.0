@@ -15,9 +15,6 @@
                         <button name="button_dummy" states="draft" string="Compute Tax" type="object" icon="gtk-execute" class="oe_highlight" help="Taxes are computed when the invoice is validated however you may use this to pre-calculate the tax amount."/>
                     </div>
                 </field>
-                <field name="payment_term" position="after">
-                    <field name="invoice_doc_no" attrs="{'required': [('type','=','out_refund')],'invisible': [('type','!=','out_refund')]}"/>
-                </field>
                 <xpath expr="/form/sheet/notebook/page[@string='Invoice Lines']/field[@name='invoice_line']/tree/field[@name='price_unit']" position="before">
                     <field name="line_tax" readonly="1"/>
                 </xpath>
