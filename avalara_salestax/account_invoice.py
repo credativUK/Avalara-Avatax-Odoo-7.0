@@ -305,7 +305,7 @@ class account_invoice(osv.osv):
                 
                 lines1.extend(lines2)
                 account_tax_obj._get_compute_tax(cr, uid, avatax_config, invoice.date_invoice,
-                                                   invoice.internal_number, not invoice.invoice_doc_no and 'SalesInvoice' or 'ReturnInvoice',
+                                                   invoice.internal_number, not invoice.type == 'out_refund' and 'SalesInvoice' or 'ReturnInvoice',
                                                    invoice.partner_id, invoice.company_id.partner_id.id,
                                                    shipping_add_id, lines1, invoice.user_id, invoice.exemption_code or None, invoice.exemption_code_id.code or None, 
                                                    True, invoice.date_invoice,
@@ -401,7 +401,7 @@ class account_invoice(osv.osv):
                 #extend list lines1 with lines2 to send all invoice lines in avalara    
                 lines1.extend(lines2)
                 account_tax_obj._get_compute_tax(cr, uid, avatax_config, invoice.date_invoice,
-                                                   invoice.internal_number, not invoice.invoice_doc_no and 'SalesInvoice' or 'ReturnInvoice',
+                                                   invoice.internal_number, not invoice.type == 'out_refund' and 'SalesInvoice' or 'ReturnInvoice',
                                                    invoice.partner_id, invoice.company_id.partner_id.id,
                                                    shipping_add_id, lines1, invoice.user_id, invoice.exemption_code or None, invoice.exemption_code_id.code or None,
                                                    False, invoice.date_invoice,
