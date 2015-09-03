@@ -301,13 +301,13 @@ class sale_order(osv.osv):
         s_tax_amt = 0.0
         lines = []
         for order in self.browse(cr, uid, ids):
+            shipping_add_id = self.get_address_for_tax(cr, uid, ids, context=context)
             avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, order.company_id.id, context=context)
-            c_code = partner_obj.browse(cr, uid, order.partner_id.id).country_id.code or False
+            c_code = partner_obj.browse(cr, uid, shipping_add_id).country_id.code or False
             cs_code = []        #Countries where Avalara address validation is enabled
             for c_brw in avatax_config.country_ids:
                 cs_code.append(str(c_brw.code))
             if avatax_config and not avatax_config.disable_tax_calculation and c_code in cs_code:
-                shipping_add_id = self.get_address_for_tax(cr, uid, ids, context)
                 
                 lines1 = self.create_lines(cr, uid, order.order_line)
                 lines2 = self.create_shipping_line(cr, uid, order.shipping_lines)
