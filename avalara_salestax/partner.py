@@ -194,7 +194,7 @@ class res_partner(osv.osv):
         valid_address = result.ValidAddresses[0][0]
         return valid_address
 
-    def update_address(self, cr, uid, ids, vals, from_write=False, context=None):
+    def avalara_sanitise_address(self, cr, uid, ids, vals, from_write=False, context=None):
         """ Updates the vals dictionary with the valid address as returned from the Avalara Address Validation. """
         address = vals        
         if vals and ids:
@@ -236,7 +236,7 @@ class res_partner(osv.osv):
         if vals.get('parent_id') and vals.get('use_parent_address'):
             domain_siblings = [('parent_id', '=', vals['parent_id']), ('use_parent_address', '=', True)]
             update_ids = [vals['parent_id']] + self.search(cr, uid, domain_siblings, context=context)
-            vals = self.update_address(cr, uid, update_ids, vals, context=context)
+            vals = self.avalara_sanitise_address(cr, uid, update_ids, vals, context=context)
         else:
             address = vals
             if (vals.get('street') or vals.get('street2') or vals.get('zip') or vals.get('city') or \
@@ -300,7 +300,7 @@ class res_partner(osv.osv):
         if context.get('from_validate_button', False):
             return super(res_partner, self).write(cr, uid, ids, vals, context)
 #        if context.get('active_id', False):
-        vals1 = self.update_address(cr, uid, ids, vals, True, context=context)
+        vals1 = self.avalara_sanitise_address(cr, uid, ids, vals, True, context=context)
         return super(res_partner, self).write(cr, uid, ids, vals1, context)
     
 
