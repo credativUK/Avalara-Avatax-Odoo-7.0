@@ -5,6 +5,7 @@ import string
 import os
 import datetime
 import base64
+import unicodedata
 
 from tools.translate import _
 from osv import osv
@@ -240,14 +241,17 @@ class AvaTaxError(Error):
 class BaseAddress:
 
     def __init__(self, addSvc, Line1=None, Line2=None, City=None, PostalCode=None, Region=None, Country=None, AddressCode=None):
+        def normalise(value):
+            # Normalise accented characters as they cannot be handled by the external system
+            return value and unicodedata.normalize('NFKD', value).encode('ascii','ignore')
         self.data = addSvc.factory.create('BaseAddress')
         self.data.TaxRegionId = 0
-        self.data.Line1 = Line1
-        self.data.Line2 = Line2
-        self.data.City = City
-        self.data.PostalCode = PostalCode
-        self.data.Region = Region
-        self.data.Country = Country
+        self.data.Line1 = normalise(Line1)
+        self.data.Line2 = normalise(Line2)
+        self.data.City = normalise(City)
+        self.data.PostalCode = normalise(PostalCode)
+        self.data.Region = normalise(Region)
+        self.data.Country = normalise(Country)
         self.data.AddressCode = AddressCode
 
 class Line:
