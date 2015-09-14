@@ -11,7 +11,7 @@
             <field name="action">action_date_assign()
 action_move_create()
 action_number()
-write({'state':'open'})
+invoice_validate()
 action_commit_tax()</field>
             <field name="kind">function</field>
         </record>
