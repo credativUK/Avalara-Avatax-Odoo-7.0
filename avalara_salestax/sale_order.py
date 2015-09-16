@@ -136,7 +136,7 @@ class sale_order(osv.osv):
                                                          'tax_add_invoice': order.tax_add_invoice,
                                                          'tax_add_shipping': order.tax_add_shipping,
 #                                                         'shipping_add_id': order.tax_add_invoice and order.partner_invoice_id.id or order.tax_add_shipping and order.partner_shipping_id.id or order.partner_id.id,
-                                                          'shipping_address': order.tax_address,
+                                                          #'shipping_address': order.tax_address,
                                                           'location_code': order.location_code or '',  
                                                         })
             

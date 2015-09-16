@@ -33,12 +33,19 @@ def get_address_for_tax(self, cr, uid, ids, context=None):
             a = inv_obj.origin
             
             if len(a.split(':')) > 1:
-                so_origin = a.split(':')[1]
+                origin = a.split(':')[1]
             else:
-                so_origin = a.split(':')[0]
-                
-            sale_ids = self.pool.get('sale.order').search(cr, uid, [('name','=',so_origin)], context=context)
-            for order in self.pool.get('sale.order').browse(cr, uid, sale_ids, context):
+                origin = a.split(':')[0]
+            sale_obj = self.pool.get('sale.order')
+            sale_ids = sale_obj.search(cr, uid, [('name','=',origin)], context=context)
+            orders = sale_obj.browse(cr, uid, sale_ids, context=context)
+            if not orders:
+                # Try searching pickings for those which match origin field
+                picking_obj = self.pool.get('stock.picking')
+                picking_ids = picking_obj.search(cr, uid, [('name','=',origin)], context=context)
+                pickings = picking_obj.browse(cr, uid, picking_ids, context=context)
+                orders = [picking.sale_id for picking in pickings]
+            for order in orders:
                 if order.tax_add_invoice:
                     return order.partner_invoice_id.id
                 elif order.tax_add_shipping:
@@ -47,6 +54,9 @@ def get_address_for_tax(self, cr, uid, ids, context=None):
                     return order.partner_id.id
                 else:
                     raise osv.except_osv(_('Avatax: Warning !'), _('Please select address for avalara tax'))
+            else:
+                # Make sure an address is always returned
+                return inv_obj.partner_id.id
         else:
             return inv_obj.partner_id.id
 
@@ -110,7 +120,7 @@ class account_invoice(osv.osv):
     def create(self, cr, uid, vals, context=None):
         avatax_config_obj = self.pool.get('avalara.salestax')
         avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, vals.get('company_id',False), context=context)
-        tax_calculation_disabled = avatax_config and avatax_config.disable_tax_calculation or True
+        tax_calculation_disabled = avatax_config and avatax_config.disable_tax_calculation
         if vals['partner_id'] and not tax_calculation_disabled:
             res_obj = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
             if 'exemption_code' in vals:
@@ -126,7 +136,7 @@ class account_invoice(osv.osv):
             if res_obj.validation_method:vals['is_add_validate'] = True
 #            vals['shipping_add_id'] = vals['partner_id']
             addr = self.pool.get('res.partner').browse(cr, uid, 'partner_invoice_id' in vals and vals['partner_invoice_id'] or vals['partner_id'], context=context)
-            vals['shipping_address'] = str(addr.name+ '\n'+(addr.street or '')+ '\n'+(addr.city and addr.city+', ' or ' ')+(addr.state_id and addr.state_id.name or '')+ ' '+(addr.zip or '')+'\n'+(addr.country_id and addr.country_id.name or ''))
+            #vals['shipping_address'] = str(addr.name+ '\n'+(addr.street or '')+ '\n'+(addr.city and addr.city+', ' or ' ')+(addr.state_id and addr.state_id.name or '')+ ' '+(addr.zip or '')+'\n'+(addr.country_id and addr.country_id.name or ''))
         
         return super(account_invoice, self).create(cr, uid, vals, context=context)
 #    
@@ -146,12 +156,12 @@ class account_invoice(osv.osv):
             else:
                 vals['is_add_validate'] = False
             addr = self.pool.get('res.partner').browse(cr, uid, 'partner_invoice_id' in vals and vals['partner_invoice_id'] or vals['partner_id'], context=context)
-            vals['shipping_address'] = str(addr.name+ '\n'+(addr.street or '')+ '\n'+(addr.city and addr.city+', ' or ' ')+(addr.state_id and addr.state_id.name or '')+ ' '+(addr.zip or '')+'\n'+(addr.country_id and addr.country_id.name or ''))    
+            #vals['shipping_address'] = str(addr.name+ '\n'+(addr.street or '')+ '\n'+(addr.city and addr.city+', ' or ' ')+(addr.state_id and addr.state_id.name or '')+ ' '+(addr.zip or '')+'\n'+(addr.country_id and addr.country_id.name or ''))    
                 
         if 'tax_add_default' in vals: vals['tax_add_default'] = vals['tax_add_default']
         if 'tax_add_invoice' in vals: vals['tax_add_invoice'] = vals['tax_add_invoice']
         if 'tax_add_shipping' in vals: vals['tax_add_shipping'] = vals['tax_add_shipping']
-        if 'shipping_address' in vals: vals['shipping_address'] = vals['shipping_address']
+        #if 'shipping_address' in vals: vals['shipping_address'] = vals['shipping_address']
         
         return super(account_invoice, self).write(cr, uid, ids, vals, context=context)
     
