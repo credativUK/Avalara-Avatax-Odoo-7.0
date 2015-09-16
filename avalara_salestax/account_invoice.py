@@ -29,6 +29,8 @@ import decimal_precision as dp
 def get_address_for_tax(self, cr, uid, ids, context=None):
     """ partner address, on which avalara tax will calculate  """
     for inv_obj in self.pool.get('account.invoice').browse(cr, uid, ids, context):
+        # Attempt to identify a related Sale Order based in invoice origin;
+        # if one can be found, take an address from this.
         if inv_obj.origin:
             a = inv_obj.origin
             
@@ -44,8 +46,9 @@ def get_address_for_tax(self, cr, uid, ids, context=None):
                 picking_obj = self.pool.get('stock.picking')
                 picking_ids = picking_obj.search(cr, uid, [('name','=',origin)], context=context)
                 pickings = picking_obj.browse(cr, uid, picking_ids, context=context)
-                orders = [picking.sale_id for picking in pickings]
-            for order in orders:
+                orders = [picking.sale_id for picking in pickings if picking.sale_id]
+            order = orders and orders[0] or False
+            if order:
                 if order.tax_add_invoice:
                     return order.partner_invoice_id.id
                 elif order.tax_add_shipping:
@@ -53,12 +56,9 @@ def get_address_for_tax(self, cr, uid, ids, context=None):
                 elif order.tax_add_default:
                     return order.partner_id.id
                 else:
-                    raise osv.except_osv(_('Avatax: Warning !'), _('Please select address for avalara tax'))
-            else:
-                # Make sure an address is always returned
-                return inv_obj.partner_id.id
-        else:
-            return inv_obj.partner_id.id
+                    raise osv.except_osv(_('Avatax: Warning !'), _('Please select address for avalara tax on Sale Order %s') % order.name)
+        # Make sure an address is returned if no related orders can be identified
+        return inv_obj.partner_id.id
 
 class account_invoice(osv.osv):
     """Inherit to implement the tax calculation using avatax API"""
@@ -120,7 +120,7 @@ class account_invoice(osv.osv):
     def create(self, cr, uid, vals, context=None):
         avatax_config_obj = self.pool.get('avalara.salestax')
         avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, vals.get('company_id',False), context=context)
-        tax_calculation_disabled = avatax_config and avatax_config.disable_tax_calculation
+        tax_calculation_disabled = avatax_config and avatax_config.disable_tax_calculation or False
         if vals['partner_id'] and not tax_calculation_disabled:
             res_obj = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
             if 'exemption_code' in vals:
