@@ -67,8 +67,9 @@ class product_category(osv.osv):
     def _get_default_tax_code(self, cr, uid, context=None):
         """ Returns the default product tax code."""
 
-        tax_code_pool = self.pool.get('product.tax.code')
-        return tax_code_pool.search(cr, uid, [('name', '=', 'ProdTax')], context=context)
+        imd_obj = self.pool.get('ir.model.data')
+        code_id = imd_obj.get_object_reference(cr, uid, 'avalara_salestax', 'default_product_tax_code')[1]
+        return code_id
 
     _defaults = {
         'tax_code_id': _get_default_tax_code,
