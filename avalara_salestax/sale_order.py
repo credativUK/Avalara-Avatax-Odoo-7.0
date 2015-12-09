@@ -78,6 +78,8 @@ class sale_order(osv.osv):
         return super(sale_order, self).create(cr, uid, vals, context=context)
 #    
     def write(self, cr, uid, ids, vals, context=None):
+        if not hasattr(ids, '__iter__'):
+            ids = [ids]
         for self_obj in self.browse(cr, uid, ids):
             ship_add_id = False
             if 'tax_add_default' in vals and vals['tax_add_default']:
@@ -291,6 +293,8 @@ class sale_order(osv.osv):
         @param order_line: send sub_total of each line and get tax amount
         @param shiiping_line: send shipping amount of each ship line and get ship tax amount  
         """
+        if not hasattr(ids, '__iter__'):
+            ids = [ids]
         avatax_config_obj = self.pool.get('avalara.salestax')
         account_tax_obj = self.pool.get('account.tax')
         partner_obj = self.pool.get('res.partner')
