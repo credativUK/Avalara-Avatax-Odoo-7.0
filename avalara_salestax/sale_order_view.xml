@@ -31,11 +31,11 @@
                     </group>
                </group>
                 <xpath expr="/form/sheet/notebook/page[@string='Order Lines']/field[@name='order_line']/tree/field[@name='price_unit']" position="before">
-                    <field name="line_tax" readonly="1"/>
+                    <field name="line_tax" readonly="1" invisible="1"/>
                 </xpath>
 
                 <xpath expr="/form/sheet/notebook/page[@string='Order Lines']/field[@name='order_line']/form/group/group/field[@name='price_unit']" position="before">
-                    <field name="line_tax" readonly="1"/>
+                    <field name="line_tax" readonly="1" invisible="1"/>
                 </xpath>
 
                 <xpath expr="/form/sheet/notebook/page[@string='Other Information']/group/group[@name='sale_pay']" position="after">
