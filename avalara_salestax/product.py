@@ -68,7 +68,8 @@ class product_category(osv.osv):
         """ Returns the default product tax code."""
 
         tax_code_pool = self.pool.get('product.tax.code')
-        return tax_code_pool.search(cr, uid, [('name', '=', 'ProdTax')], context=context)
+        tax_code = tax_code_pool.search(cr, uid, [('name', '=', 'ProdTax')], context=context)
+        return isinstance(tax_code, list) and tax_code[0] or False
 
     _defaults = {
         'tax_code_id': _get_default_tax_code,
