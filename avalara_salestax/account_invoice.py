@@ -486,13 +486,13 @@ class account_invoice(osv.osv):
                 })    
         return refund_ids
 
-    def action_cancel(self, cr, uid, ids, *args):
+    def action_cancel(self, cr, uid, ids, context=None):
         account_tax_obj = self.pool.get('account.tax')
         avatax_config_obj = self.pool.get('avalara.salestax')
         partner_obj = self.pool.get('res.partner')
-        res = super(account_invoice, self).action_cancel(cr, uid, ids, *args)
+        res = super(account_invoice, self).action_cancel(cr, uid, ids, context=context)
 
-        for invoice in self.browse(cr, uid, ids, *args):
+        for invoice in self.browse(cr, uid, ids, context=context):
             avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid, invoice.company_id.id)
             c_code = partner_obj.browse(cr, uid, invoice.partner_id.id).country_id.code or False
             cs_code = []        #Countries where Avalara address validation is enabled
